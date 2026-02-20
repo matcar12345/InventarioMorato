@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Formulario de Salas - con guardado persistente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --pri: #4f46e5;
+      --pri-700: #4338ca;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+    .wrap { max-width: 1080px; margin: 32px auto; padding: 0 16px; }
+    .head { display:flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .actions { display:flex; gap: 12px; flex-wrap: wrap; }
+    button, .btn {
+      padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 0;
+      transition: all .2s ease;
+    }
+    .btn-primary { background: var(--pri); color: white; }
+    .btn-primary:hover { background: var(--pri-700); }
+    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f8f9fa; }
+    .btn-ghost { background: transparent; border: 1px dashed var(--border); color: var(--pri); }
+    .btn-danger { background: var(--danger); color: white; padding: 8px 12px; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+    .card {
+      background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    }
+    .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge { padding: 6px 12px; border-radius: 999px; background: #f3f4f6; color: var(--muted); font-weight: 700; font-size: 13px; }
+    .field { margin: 16px 0; }
+    .label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; display: block; }
+    input[type="text"], select, textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px;
+    }
+    .el-check {
+      margin-left: 2%; margin-right: auto;
+      transform: scale(1.2);
+    }
+    select { appearance: none; background: white; }
+    input:focus, select:focus, textarea:focus { border-color: var(--pri); outline: none; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    textarea { min-height: 90px; resize: vertical; }
+    .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
+    .check-item { display: flex; flex-direction: column; gap: 6px; }
+    .check-item label { font-size: 14px; font-weight: 500; }
+    .empty { text-align: center; padding: 60px 20px; border: 2px dashed var(--border); border-radius: 16px; color: var(--muted); margin: 40px 0; }
+    .footer {
+      position: sticky; bottom: 0; background: rgba(246,247,251,0.95);
+      border-top: 1px solid var(--border); padding: 16px; margin-top: 32px; z-index: 10;
+    }
+    .footer-actions { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Gestión de Salas</h1>
+      <div class="actions">
+        <button class="btn btn-ghost" id="addRoomBtn">+ Agregar sala</button>
+      </div>
+    </div>
+    <div id="roomsContainer" class="grid"></div>
+    <div id="emptyState" class="empty">
+      <div>Aún no has agregado ninguna sala</div>
+      <br>
+      <button class="btn btn-primary" id="addFirstRoomBtn">+ Agregar la primera sala</button>
+    </div>
+    <div class="footer hidden" id="footerActions">
+      <div class="footer-actions">
+        <button class="btn btn-outline" id="cancelBtn">Limpiar todo</button>
+        <button class="btn btn-primary" id="createBtn">Generar Excel con las salas</button>
+      </div>
+    </div>
+  </div>
+
+  <template id="roomTemplate">
+    <div class="card room" data-id="">
+      <div class="card-head">
+        <span class="badge">Sala</span>
+        <button class="btn btn-danger" onclick="removeRoom(this.closest('.room'))">Eliminar</button>
+      </div>
+      <div class="field">
+        <label class="label">Nombre de la sala</label>
+        <input type="text" class="room-name" />
+      </div>
+      <div class="field">
+        <label class="label">Nombre de quien realiza la revisión</label>
+        <input type="text" class="reviewer-name" />
+      </div>
+      <div class="field">
+        <label class="label">Serial de cámara</label>
+        <input type="text" class="serial-camara" />
+      </div>
+      <div class="field">
+        <label class="label">Elementos disponibles</label>
+        <div class="checks">
+          <div class="check-item">
+            <label>Televisor</label>
+            <select class="el-televisor">
+              <option value="no selecciono">Eliga una opción</option>
+              <option value="Funciona">Funciona</option>
+              <option value="No funciona">No funciona</option>
+              <option value="No tiene">No tiene</option>
+            </select>
+          </div>
+          <div class="check-item">
+            <label>Cable HDMI</label>
+            <select class="el-hdmi">
+              <option value="no selecciono">Eliga una opción</option>
+              <option value="Funciona">Funciona</option>
+              <option value="No funciona">No funciona</option>
+              <option value="No tiene">No tiene</option>
+            </select>
+          </div>
+          <div class="check-item">
+            <label>Cámara</label>
+            <select class="el-camara">
+              <option value="no selecciono">Eliga una opción</option>
+              <option value="Funciona">Funciona</option>
+              <option value="No funciona">No funciona</option>
+              <option value="No tiene">No tiene</option>
+            </select>
+          </div>
+          <div class="check-item">
+            <label>Control</label>
+            <select class="el-control">
+              <option value="no selecciono">Eliga una opción</option>
+              <option value="Funciona">Funciona</option>
+              <option value="No funciona">No funciona</option>
+              <option value="No tiene">No tiene</option>
+            </select>
+          </div>
+          <div class="check-item">
+            <label>¿Tiene micrófonos externos?</label>
+            <input type="checkbox" class="el-microfonos el-check">
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Estado actual de la sala</label>
+        <select class="estado">
+          <option value="no selecciono">Eliga una opción</option>
+          <option value="Operativa">Operativa</option>
+          <option value="Incompleta">Incompleta</option>
+          <option value="Inoperativa">Inoperativa</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label">Detalles / observaciones</label>
+        <textarea class="detalles"></textarea>
+      </div>
+    </div>
+  </template>
+
+<script>
+const STORAGE_KEY = 'salas_inventario_v2';
+const roomsContainer = document.getElementById('roomsContainer');
+const tmpl = document.getElementById('roomTemplate');
+
+function saveRooms() {
+  const data = Array.from(roomsContainer.querySelectorAll('.room')).map(card => ({
+    name: card.querySelector('.room-name').value.trim(),
+    reviewer: card.querySelector('.reviewer-name').value.trim(),
+    serial_camara: card.querySelector('.serial-camara').value.trim(),
+    televisor: card.querySelector('.el-televisor').value,
+    hdmi: card.querySelector('.el-hdmi').value,
+    camara: card.querySelector('.el-camara').value,
+    control: card.querySelector('.el-control').value,
+    microfonos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
+    estado: card.querySelector('.estado').value,
+    detalles: card.querySelector('.detalles').value.trim(),
+    fecha: card.dataset.fecha || new Date().toISOString()
+  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadRooms() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+  JSON.parse(saved).forEach(item => {
+    const clone = document.importNode(tmpl.content, true);
+    const card = clone.firstElementChild;
+    card.querySelector('.room-name').value = item.name || '';
+    card.querySelector('.reviewer-name').value = item.reviewer || '';
+    card.querySelector('.serial-camara').value = item.serial_camara || '';
+    card.querySelector('.el-televisor').value = item.televisor || '';
+    card.querySelector('.el-hdmi').value = item.hdmi || '';
+    card.querySelector('.el-camara').value = item.camara || '';
+    card.querySelector('.el-control').value = item.control || '';
+    card.querySelector('.el-microfonos').checked = item.microfonos === 'Si tiene';
+    card.querySelector('.estado').value = item.estado || '';
+    card.querySelector('.detalles').value = item.detalles || '';
+    card.dataset.fecha = item.fecha || new Date().toISOString();
+    roomsContainer.appendChild(card);
+  });
+  if (roomsContainer.children.length > 0) {
+    document.getElementById('footerActions').classList.remove('hidden');
+    document.getElementById('emptyState').classList.add('hidden');
+  }
+}
+
+function scrollToLastRoom(smooth = true) {
+  const lastRoom = roomsContainer.lastElementChild;
+  if (!lastRoom) return;
+  setTimeout(() => {
+    lastRoom.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto',
+      block: 'center'
+    });
+  }, 50);
+}
+
+function addRoom() {
+  const clone = document.importNode(tmpl.content, true);
+  const card = clone.firstElementChild;
+  roomsContainer.appendChild(clone);
+  document.getElementById('footerActions').classList.remove('hidden');
+  document.getElementById('emptyState').classList.add('hidden');
+  scrollToLastRoom(true);
+  card.querySelector('.room-name')?.focus();
+}
+
+function removeRoom(card) {
+  card.remove();
+  saveRooms();
+  if (!roomsContainer.querySelector('.room')) {
+    document.getElementById('footerActions').classList.add('hidden');
+    document.getElementById('emptyState').classList.remove('hidden');
+  }
+}
+
+function collectData() {
+  return Array.from(roomsContainer.querySelectorAll('.room')).map((card, i) => ({
+    '#': i + 1,
+    'Nombre de la sala': card.querySelector('.room-name').value.trim(),
+    'Revisado por': card.querySelector('.reviewer-name').value.trim(),
+    'Serial Cámara': card.querySelector('.serial-camara').value.trim(),
+    'Televisor': card.querySelector('.el-televisor').value,
+    'Cable HDMI': card.querySelector('.el-hdmi').value,
+    'Cámara': card.querySelector('.el-camara').value,
+    'Control': card.querySelector('.el-control').value,
+    'Micrófonos externos': card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
+    'Estado Sala': card.querySelector('.estado').value,
+    'Detalles extra': card.querySelector('.detalles').value.trim(),
+    'Fecha registro': card.dataset.fecha || new Date().toISOString()
+  }));
+}
+
+async function exportExcel() {
+  const data = collectData();
+  if (data.length === 0) {
+    alert("No hay salas para exportar.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Salas");
+
+  const excelBinaryString = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  const buf = new ArrayBuffer(excelBinaryString.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < excelBinaryString.length; i++) {
+    view[i] = excelBinaryString.charCodeAt(i) & 0xFF;
+  }
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: `Inventario_Salas_${new Date().toISOString().slice(0,10)}.xlsx`,
+        types: [{
+          description: 'Archivo Excel',
+          accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+        }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error(err);
+        fallbackDownload(blob);
+      }
+    }
+  } else {
+    fallbackDownload(blob);
+  }
+
+  const data_fetch = data.map(record => ({
+    nombre_sala: record['Nombre de la sala'],
+    nombre_tecnico: record['Revisado por'],
+    serial_camara: record['Serial Cámara'],
+    estado_tv: record['Televisor'],
+    estado_hdmi: record['Cable HDMI'],
+    estado_camara: record['Cámara'],
+    estado_control: record['Control'],
+    microfonos_externos: record['Micrófonos externos'],
+    estado_sala: record['Estado Sala'],
+    detalles_extra: record['Detalles extra'],
+    fecha_revision: record['Fecha registro']
+  }));
+
+  fetch("https://rpeencgsnhjjmohuvwgj.supabase.co/rest/v1/revision_salas", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "apikey": "sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co",
+      "Authorization": "Bearer sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co"
+    },
+    body: JSON.stringify(data_fetch)
+  }).catch(err => console.error("Error al enviar a Supabase:", err));
+}
+
+function fallbackDownload(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Inventario_Salas_${new Date().toISOString().slice(0,10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('addRoomBtn').onclick = addRoom;
+document.getElementById('addFirstRoomBtn').onclick = addRoom;
+document.getElementById('createBtn').onclick = exportExcel;
+
+document.addEventListener('input', e => {
+  if (e.target.closest('.room')) saveRooms();
+});
+document.addEventListener('change', e => {
+  if (e.target.closest('.room')) saveRooms();
+});
+
+loadRooms();
+if (roomsContainer.children.length > 0) {
+  setTimeout(() => scrollToLastRoom(false), 100);
+}
+</script>
+</body>
+</html>
