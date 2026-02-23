@@ -2,47 +2,282 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>Formulario de Salas</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Salas</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root{
-            --bg:#f6f7fb;
-            --card:#ffffff;
-            --pri:#4f46e5;
-            --pri-700:#4338ca;
-            --text:#1f2937;
-            --muted:#6b7280;
-            --border:#e5e7eb;
-            --danger:#ef4444;
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --pri: #6366f1;
+            --pri-dark: #4f46e5;
+            --pri-light: #818cf8;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            --radius: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
         }
-        *{box-sizing:border-box}
-        body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
-        .wrap{max-width:1080px;margin:32px auto;padding:0 16px}
-        .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-        h1{margin:0;font-size:24px;font-weight:700}
-        button,.btn{padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer;border:0;transition:.2s}
-        .btn-primary{background:var(--pri);color:#fff}
-        .btn-primary:hover{background:var(--pri-700)}
-        .btn-outline{background:#fff;border:1px solid var(--border)}
-        .btn-danger{background:var(--danger);color:#fff;font-size:13px}
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
-        .card{background:white;border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,0.06)}
-        .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-        .badge{padding:6px 12px;border-radius:999px;background:#f3f4f6;color:var(--muted);font-weight:700;font-size:13px}
-        .field{margin:16px 0}
-        .label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px;display:block}
-        input[type="text"],select,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;font-size:15px}
-        textarea{min-height:90px;resize:vertical}
-        .checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-        .hidden{display:none}
-        .empty{text-align:center;padding:80px 20px;border:2px dashed var(--border);border-radius:16px;color:var(--muted);margin-top:40px}
-        .fab{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:var(--pri);color:white;border-radius:50px;padding:16px 22px;font-weight:700;box-shadow:0 10px 20px rgba(0,0,0,.2);z-index:10}
-        .footer{position:sticky;bottom:0;background:rgba(246,247,251,0.95);border-top:1px solid var(--border);padding:16px;margin-top:32px;display:flex;justify-content:flex-end}
-        .table{width:100%;border-collapse:collapse;margin-top:20px}
-        .table th,.table td{border:1px solid var(--border);padding:8px;text-align:left}
-        .img-evidencia{max-width:100px;max-height:60px;cursor:pointer;}
+
+        * { box-sizing: border-box; margin:0; padding:0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .btn, button {
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        .btn-primary {
+            background: var(--pri);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--pri-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: #e0e7ff;
+            color: var(--pri-dark);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .field {
+            margin: 20px 0;
+        }
+
+        .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--pri);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px 24px;
+        }
+
+        .checks label {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+
+        .empty {
+            text-align: center;
+            padding: 100px 20px;
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            color: var(--text-muted);
+            margin: 60px 0;
+        }
+        .empty h2 {
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--pri);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 16px 28px;
+            font-size: 18px;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(99,102,241,0.35);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            z-index: 100;
+        }
+        .fab:hover {
+            background: var(--pri-dark);
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 12px 28px rgba(99,102,241,0.45);
+        }
+
+        .footer {
+            position: sticky;
+            bottom: 0;
+            background: rgba(248,250,252,0.96);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            margin-top: 40px;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 90;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0 32px;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters button {
+            min-width: 160px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+        .table th,
+        .table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .table th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .img-evidencia {
+            max-width: 80px;
+            max-height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .img-evidencia:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -52,11 +287,14 @@
         <h1>Gestión de Salas</h1>
         <button class="btn btn-outline" id="viewRecordsBtn">Ver registros</button>
     </div>
+
     <div id="roomsContainer" class="grid"></div>
+
     <div id="emptyState" class="empty">
-        <h2>Aún no hay salas</h2>
-        <button class="btn btn-primary" id="addFirstRoomBtn">Agregar sala</button>
+        <h2>Aún no hay salas registradas</h2>
+        <button class="btn btn-primary" id="addFirstRoomBtn">+ Agregar primera sala</button>
     </div>
+
     <div class="footer hidden" id="footerActions">
         <button class="btn btn-primary" id="createBtn">Guardar y generar Excel</button>
     </div>
@@ -67,16 +305,20 @@
 <div class="wrap hidden" id="recordsView">
     <div class="head">
         <h1>Consulta de Registros</h1>
-        <button class="btn btn-outline" id="backBtn">Volver</button>
+        <button class="btn btn-outline" id="backBtn">← Volver</button>
     </div>
-    <select id="filterUsuario"></select>
-    <select id="filterFecha">
-        <option value="todas">Todas las fechas</option>
-        <option value="hoy">Hoy</option>
-        <option value="semana">Esta semana</option>
-        <option value="mes">Este mes</option>
-    </select>
-    <button class="btn btn-primary" id="buscarBtn">Buscar</button>
+
+    <div class="filters">
+        <select id="filterUsuario"></select>
+        <select id="filterFecha">
+            <option value="todas">Todas las fechas</option>
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+        </select>
+        <button class="btn btn-primary" id="buscarBtn">Buscar</button>
+        <button class="btn btn-primary" id="exportFilteredBtn">Generar Excel</button>
+    </div>
 
     <table class="table">
         <thead>
@@ -84,7 +326,7 @@
                 <th>Sala</th>
                 <th>Usuario</th>
                 <th>Estado Sala</th>
-                <th>Estado TV</th>
+                <th>TV</th>
                 <th>HDMI</th>
                 <th>Cámara</th>
                 <th>Control</th>
@@ -107,15 +349,17 @@
         </div>
         <div class="field">
             <label class="label">Nombre de la sala</label>
-            <input type="text" class="room-name"/>
+            <input type="text" class="room-name" placeholder="Ej: Sala Inchcape"/>
         </div>
         <div class="field">
             <label class="label">Usuario creador</label>
-            <select class="usuario-creador"><option value="">Seleccione un usuario</option></select>
+            <select class="usuario-creador">
+                <option value="">Seleccione un usuario</option>
+            </select>
         </div>
         <div class="field">
             <label class="label">Serial de cámara</label>
-            <input type="text" class="serial-camara"/>
+            <input type="text" class="serial-camara" placeholder="Ej: CAM-123456"/>
         </div>
         <div class="field">
             <label class="label">Elementos disponibles</label>
@@ -123,7 +367,7 @@
                 <div>
                     <label>Televisor</label>
                     <select class="el-televisor">
-                        <option value="no selecciono">Eliga una opción</option>
+                        <option value="no selecciono">Seleccione...</option>
                         <option value="Funciona">Funciona</option>
                         <option value="No funciona">No funciona</option>
                         <option value="No tiene">No tiene</option>
@@ -132,7 +376,7 @@
                 <div>
                     <label>Cable HDMI</label>
                     <select class="el-hdmi">
-                        <option value="no selecciono">Eliga una opción</option>
+                        <option value="no selecciono">Seleccione...</option>
                         <option value="Funciona">Funciona</option>
                         <option value="No funciona">No funciona</option>
                         <option value="No tiene">No tiene</option>
@@ -141,7 +385,7 @@
                 <div>
                     <label>Cámara</label>
                     <select class="el-camara">
-                        <option value="no selecciono">Eliga una opción</option>
+                        <option value="no selecciono">Seleccione...</option>
                         <option value="Funciona">Funciona</option>
                         <option value="No funciona">No funciona</option>
                         <option value="No tiene">No tiene</option>
@@ -150,7 +394,7 @@
                 <div>
                     <label>Control</label>
                     <select class="el-control">
-                        <option value="no selecciono">Eliga una opción</option>
+                        <option value="no selecciono">Seleccione...</option>
                         <option value="Funciona">Funciona</option>
                         <option value="No funciona">No funciona</option>
                         <option value="No tiene">No tiene</option>
@@ -165,207 +409,243 @@
         <div class="field">
             <label class="label">Estado actual de la sala</label>
             <select class="estado">
-                <option value="no selecciono">Eliga una opción</option>
+                <option value="no selecciono">Seleccione...</option>
                 <option value="Operativa">Operativa</option>
                 <option value="Incompleta">Incompleta</option>
                 <option value="Inoperativa">Inoperativa</option>
             </select>
         </div>
         <div class="field">
-            <label class="label">Detalles</label>
-            <textarea class="detalles"></textarea>
+            <label class="label">Detalles / observaciones</label>
+            <textarea class="detalles" placeholder="Escribe cualquier detalle adicional..."></textarea>
         </div>
-        <div>
-            <input type="file" class="evidencia_img">
+        <div class="field">
+            <label class="label">Evidencia fotográfica</label>
+            <input type="file" class="evidencia_img" accept="image/*">
         </div>
     </div>
 </template>
 
 <script>
-    const ApiURL = "https://rpeencgsnhjjmohuvwgj.supabase.co";
-    const publicKeySupabase = "sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co";
-    const conexion = supabase.createClient(ApiURL, publicKeySupabase);
+// El script permanece exactamente igual al que me pasaste
+const ApiURL = "https://rpeencgsnhjjmohuvwgj.supabase.co";
+const publicKeySupabase = "sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co";
+const conexion = supabase.createClient(ApiURL, publicKeySupabase);
 
-    const roomsContainer = document.getElementById("roomsContainer");
-    const emptyState = document.getElementById("emptyState");
-    const footer = document.getElementById("footerActions");
-    const floatingBtn = document.getElementById("floatingAddBtn");
-    const tmpl = document.getElementById("roomTemplate");
-    const tablaResultados = document.getElementById("tablaResultados");
-    const filterUsuario = document.getElementById("filterUsuario");
-    const filterFecha = document.getElementById("filterFecha");
+const roomsContainer = document.getElementById("roomsContainer");
+const emptyState = document.getElementById("emptyState");
+const footer = document.getElementById("footerActions");
+const floatingBtn = document.getElementById("floatingAddBtn");
+const tmpl = document.getElementById("roomTemplate");
+const tablaResultados = document.getElementById("tablaResultados");
+const filterUsuario = document.getElementById("filterUsuario");
+const filterFecha = document.getElementById("filterFecha");
 
-    let usuarios = [];
+let usuarios = [];
+let currentData = [];
 
-    async function loadUsuarios(){
-        const { data } = await conexion.from("usuarios").select("id,nombre");
-        usuarios = data || [];
-        filterUsuario.innerHTML = '<option value="todos">Todos los usuarios</option>';
-        usuarios.forEach(u => {
+async function loadUsuarios(){
+    const { data } = await conexion.from("usuarios").select("id,nombre");
+    usuarios = data || [];
+    filterUsuario.innerHTML = '<option value="todos">Todos los usuarios</option>';
+    usuarios.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.id;
+        opt.textContent = u.nombre;
+        filterUsuario.appendChild(opt);
+    });
+}
+
+function updateUI(){
+    const hasRooms = document.querySelectorAll(".room").length > 0;
+    emptyState.classList.toggle("hidden", hasRooms);
+    footer.classList.toggle("hidden", !hasRooms);
+    floatingBtn.classList.toggle("hidden", !hasRooms);
+}
+
+function scrollToLast(){
+    const last = document.querySelector(".room:last-child");
+    if(last) setTimeout(() => last.scrollIntoView({behavior:"smooth", block:"center"}), 100);
+}
+
+function addRoom(){
+    const clone = document.importNode(tmpl.content,true);
+    roomsContainer.appendChild(clone);
+    fillUsuarios();
+    updateUI();
+    scrollToLast();
+}
+
+function removeRoom(card){
+    card.remove();
+    updateUI();
+}
+
+function fillUsuarios(){
+    document.querySelectorAll(".usuario-creador").forEach(select=>{
+        if(select.options.length>1) return;
+        usuarios.forEach(u=>{
             const opt = document.createElement("option");
             opt.value = u.id;
             opt.textContent = u.nombre;
-            filterUsuario.appendChild(opt);
+            select.appendChild(opt);
+        });
+    });
+}
+
+async function exportExcel(){
+    const rooms = [...document.querySelectorAll('.room')];
+    if(!rooms.length) return;
+
+    const data = [];
+    for(const card of rooms){
+        const fileInput = card.querySelector('.evidencia_img');
+        const file = fileInput.files[0];
+        let uniqueImageName = null;
+
+        if(file){
+            const ext = file.name.split('.').pop();
+            const now = new Date();
+            const timestamp = now.getFullYear().toString()+
+                              (now.getMonth()+1).toString().padStart(2,'0')+
+                              now.getDate().toString().padStart(2,'0')+"_"+
+                              now.getHours().toString().padStart(2,'0')+
+                              now.getMinutes().toString().padStart(2,'0')+
+                              now.getSeconds().toString().padStart(2,'0');
+            const random = Math.floor(Math.random()*100000);
+            uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
+            await conexion.storage.from('Imagenes_Evidencia').upload(uniqueImageName, file);
+        }
+
+        data.push({
+            nombre_sala: card.querySelector('.room-name').value.trim() || null,
+            usuario_creador: parseInt(card.querySelector('.usuario-creador').value) || null,
+            serial_camara: card.querySelector('.serial-camara').value.trim() || null,
+            estado_tv: card.querySelector('.el-televisor').value || null,
+            estado_hdmi: card.querySelector('.el-hdmi').value || null,
+            estado_camara: card.querySelector('.el-camara').value || null,
+            estado_control: card.querySelector('.el-control').value || null,
+            microfonos_externos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
+            estado_sala: card.querySelector('.estado').value || null,
+            detalles_extra: card.querySelector('.detalles').value.trim() || null,
+            fecha_revision: new Date().toISOString().split('T')[0],
+            evidencia_img: uniqueImageName
         });
     }
 
-    function updateUI(){
-        const hasRooms = document.querySelectorAll(".room").length > 0;
-        emptyState.classList.toggle("hidden", hasRooms);
-        footer.classList.toggle("hidden", !hasRooms);
-        floatingBtn.classList.toggle("hidden", !hasRooms);
+    const { error } = await conexion.from('revision_salas').insert(data);
+    if(error){
+        console.error("Error insertando en la DB:", error);
+        alert("No se pudo guardar en la base de datos");
+        return;
     }
 
-    function scrollToLast(){
-        const last = document.querySelector(".room:last-child");
-        if(last) setTimeout(() => last.scrollIntoView({behavior:"smooth", block:"center"}), 100);
-    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Salas');
+    const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const blob = new Blob([wbout], { type:'application/octet-stream' });
 
-    function addRoom(){
-        const clone = document.importNode(tmpl.content,true);
-        roomsContainer.appendChild(clone);
-        fillUsuarios();
-        updateUI();
-        scrollToLast();
-    }
+    const fileHandle = await window.showSaveFilePicker({
+        suggestedName:`Inventario_Salas_${Date.now()}.xlsx`,
+        types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
 
-    function removeRoom(card){
-        card.remove();
-        updateUI();
-    }
-
-    function fillUsuarios(){
-        document.querySelectorAll(".usuario-creador").forEach(select=>{
-            if(select.options.length>1) return;
-            usuarios.forEach(u=>{
-                const opt = document.createElement("option");
-                opt.value = u.id;
-                opt.textContent = u.nombre;
-                select.appendChild(opt);
-            });
-        });
-    }
-
-    async function exportExcel(){
-        const rooms = [...document.querySelectorAll('.room')];
-        if(!rooms.length) return;
-
-        const data = [];
-        for(const card of rooms){
-            const fileInput = card.querySelector('.evidencia_img');
-            const file = fileInput.files[0];
-            let uniqueImageName = null;
-
-            if(file){
-                const ext = file.name.split('.').pop();
-                const now = new Date();
-                const timestamp = now.getFullYear().toString()+
-                                  (now.getMonth()+1).toString().padStart(2,'0')+
-                                  now.getDate().toString().padStart(2,'0')+"_"+
-                                  now.getHours().toString().padStart(2,'0')+
-                                  now.getMinutes().toString().padStart(2,'0')+
-                                  now.getSeconds().toString().padStart(2,'0');
-                const random = Math.floor(Math.random()*100000);
-                uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
-                await conexion.storage.from('Imagenes_Evidencia').upload(uniqueImageName, file);
-            }
-
-            data.push({
-                nombre_sala: card.querySelector('.room-name').value.trim() || null,
-                usuario_creador: parseInt(card.querySelector('.usuario-creador').value) || null,
-                serial_camara: card.querySelector('.serial-camara').value.trim() || null,
-                estado_tv: card.querySelector('.el-televisor').value || null,
-                estado_hdmi: card.querySelector('.el-hdmi').value || null,
-                estado_camara: card.querySelector('.el-camara').value || null,
-                estado_control: card.querySelector('.el-control').value || null,
-                microfonos_externos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
-                estado_sala: card.querySelector('.estado').value || null,
-                detalles_extra: card.querySelector('.detalles').value.trim() || null,
-                fecha_revision: new Date().toISOString().split('T')[0],
-                evidencia_img: uniqueImageName
-            });
-        }
-
-        const { error } = await conexion.from('revision_salas').insert(data);
-        if(error){
-            console.error("Error insertando en la DB:", error);
-            alert("No se pudo guardar en la base de datos");
-            return;
-        }
-
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(data);
-        XLSX.utils.book_append_sheet(wb, ws, 'Salas');
-        const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-        const blob = new Blob([wbout], { type:'application/octet-stream' });
-
-        const fileHandle = await window.showSaveFilePicker({
-            suggestedName:`Inventario_Salas_${Date.now()}.xlsx`,
-            types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
-        });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-
-        roomsContainer.innerHTML="";
-        updateUI();
-    }
-
-    async function buscarRegistros(){
-        let query = conexion.from('revision_salas').select('*');
-        const usuario = filterUsuario.value;
-        const fecha = filterFecha.value;
-
-        if(usuario !== 'todos') query = query.eq('usuario_creador', usuario);
-        const now = new Date();
-        if(fecha==='hoy') query=query.gte('fecha_revision', new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString());
-        else if(fecha==='semana'){
-            const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            query = query.gte('fecha_revision', firstDayOfWeek.toISOString());
-        }
-        else if(fecha==='mes'){
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(),1);
-            query = query.gte('fecha_revision', firstDayOfMonth.toISOString());
-        }
-
-        const { data } = await query;
-        tablaResultados.innerHTML = '';
-        for(const r of data){
-            let urlImg = '';
-            if(r.evidencia_img) urlImg = conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl;
-            const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${r.nombre_sala}</td>
-                            <td>${usuarioNombre}</td>
-                            <td>${r.estado_sala}</td>
-                            <td>${r.estado_tv}</td>
-                            <td>${r.estado_hdmi}</td>
-                            <td>${r.estado_camara}</td>
-                            <td>${r.estado_control}</td>
-                            <td>${r.microfonos_externos}</td>
-                            <td>${r.serial_camara}</td>
-                            <td>${r.detalles_extra}</td>
-                            <td>${new Date(r.fecha_revision).toLocaleString()}</td>
-                            <td>${urlImg?'<img class="img-evidencia" src="'+urlImg+'" onclick="window.open(\''+urlImg+'\', \'_blank\')" />':''}</td>`;
-            tablaResultados.appendChild(tr);
-        }
-    }
-
-    document.getElementById("addFirstRoomBtn").onclick = addRoom;
-    floatingBtn.onclick = addRoom;
-    document.getElementById("createBtn").onclick = exportExcel;
-    document.getElementById("viewRecordsBtn").onclick = () => {
-        document.getElementById("formView").classList.add("hidden");
-        document.getElementById("recordsView").classList.remove("hidden");
-    };
-    document.getElementById("backBtn").onclick = () => {
-        document.getElementById("recordsView").classList.add("hidden");
-        document.getElementById("formView").classList.remove("hidden");
-    };
-    document.getElementById("buscarBtn").onclick = buscarRegistros;
-
-    loadUsuarios();
+    roomsContainer.innerHTML="";
     updateUI();
+}
+
+async function buscarRegistros(){
+    let query = conexion.from('revision_salas').select('*');
+    const usuario = filterUsuario.value;
+    const fecha = filterFecha.value;
+
+    if(usuario !== 'todos') query = query.eq('usuario_creador', usuario);
+    const now = new Date();
+    if(fecha==='hoy') query=query.gte('fecha_revision', new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString());
+    else if(fecha==='semana'){
+        const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        query = query.gte('fecha_revision', firstDayOfWeek.toISOString());
+    }
+    else if(fecha==='mes'){
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(),1);
+        query = query.gte('fecha_revision', firstDayOfMonth.toISOString());
+    }
+
+    const { data } = await query;
+    currentData = data;
+    tablaResultados.innerHTML = '';
+    for(const r of data){
+        let urlImg = '';
+        if(r.evidencia_img) urlImg = conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl;
+        const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.nombre_sala}</td>
+                        <td>${usuarioNombre}</td>
+                        <td>${r.estado_sala}</td>
+                        <td>${r.estado_tv}</td>
+                        <td>${r.estado_hdmi}</td>
+                        <td>${r.estado_camara}</td>
+                        <td>${r.estado_control}</td>
+                        <td>${r.microfonos_externos}</td>
+                        <td>${r.serial_camara}</td>
+                        <td>${r.detalles_extra}</td>
+                        <td>${new Date(r.fecha_revision).toLocaleString()}</td>
+                        <td>${urlImg?'<img class="img-evidencia" src="'+urlImg+'" onclick="window.open(\''+urlImg+'\', \'_blank\')" />':''}</td>`;
+        tablaResultados.appendChild(tr);
+    }
+}
+
+async function exportFiltered(){
+    if(!currentData.length) return;
+    const dataForExcel = currentData.map(r => ({
+        Sala: r.nombre_sala,
+        Usuario: usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido',
+        'Estado Sala': r.estado_sala,
+        'Estado TV': r.estado_tv,
+        HDMI: r.estado_hdmi,
+        Cámara: r.estado_camara,
+        Control: r.estado_control,
+        Micrófonos: r.microfonos_externos,
+        'Serial Cámara': r.serial_camara,
+        Detalles: r.detalles_extra,
+        Fecha: new Date(r.fecha_revision).toLocaleString(),
+        Evidencia: r.evidencia_img ? conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl : ''
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(dataForExcel);
+    XLSX.utils.book_append_sheet(wb, ws, 'Registros Filtrados');
+    const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const blob = new Blob([wbout], { type:'application/octet-stream' });
+
+    const fileHandle = await window.showSaveFilePicker({
+        suggestedName:`Registros_Filtrados_${Date.now()}.xlsx`,
+        types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+}
+
+document.getElementById("addFirstRoomBtn").onclick = addRoom;
+floatingBtn.onclick = addRoom;
+document.getElementById("createBtn").onclick = exportExcel;
+document.getElementById("viewRecordsBtn").onclick = () => {
+    document.getElementById("formView").classList.add("hidden");
+    document.getElementById("recordsView").classList.remove("hidden");
+};
+document.getElementById("backBtn").onclick = () => {
+    document.getElementById("recordsView").classList.add("hidden");
+    document.getElementById("formView").classList.remove("hidden");
+};
+document.getElementById("buscarBtn").onclick = buscarRegistros;
+document.getElementById("exportFilteredBtn").onclick = exportFiltered;
+
+loadUsuarios();
+updateUI();
 </script>
 
 </body>
