@@ -32,11 +32,7 @@
             line-height: 1.5;
         }
 
-        .wrap {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+        .wrap { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
 
         .head {
             display: flex;
@@ -47,11 +43,7 @@
             gap: 16px;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text);
-        }
+        h1 { font-size: 28px; font-weight: 700; color: var(--text); }
 
         .btn, button {
             padding: 10px 20px;
@@ -63,41 +55,16 @@
             font-size: 15px;
         }
 
-        .btn-primary {
-            background: var(--pri);
-            color: white;
-        }
-        .btn-primary:hover {
-            background: var(--pri-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-        }
+        .btn-primary { background: var(--pri); color: white; }
+        .btn-primary:hover { background: var(--pri-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
 
-        .btn-outline {
-            background: white;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-        .btn-outline:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-        }
+        .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-            font-size: 13px;
-            padding: 6px 12px;
-        }
-        .btn-danger:hover {
-            background: var(--danger-hover);
-        }
+        .btn-danger { background: var(--danger); color: white; font-size: 13px; padding: 6px 12px; }
+        .btn-danger:hover { background: var(--danger-hover); }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 24px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
 
         .card {
             background: var(--card);
@@ -107,42 +74,17 @@
             box-shadow: var(--shadow-md);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
 
-        .card-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+        .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
-        .badge {
-            padding: 6px 14px;
-            border-radius: 999px;
-            background: #e0e7ff;
-            color: var(--pri-dark);
-            font-weight: 600;
-            font-size: 13px;
-        }
+        .badge { padding: 6px 14px; border-radius: 999px; background: #e0e7ff; color: var(--pri-dark); font-weight: 600; font-size: 13px; }
 
-        .field {
-            margin: 20px 0;
-        }
+        .field { margin: 20px 0; }
 
-        .label {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: block;
-        }
+        .label { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; display: block; }
 
-        input[type="text"],
-        select,
-        textarea {
+        input[type="text"], select, textarea {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
@@ -156,23 +98,11 @@
             box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
         }
 
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
+        textarea { min-height: 100px; resize: vertical; }
 
-        .checks {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px 24px;
-        }
+        .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px 24px; }
 
-        .checks label {
-            font-size: 14px;
-            color: var(--text);
-            font-weight: 500;
-            cursor: pointer;
-        }
+        .checks label { font-size: 14px; color: var(--text); font-weight: 500; cursor: pointer; }
 
         .hidden { display: none !important; }
 
@@ -184,10 +114,7 @@
             color: var(--text-muted);
             margin: 60px 0;
         }
-        .empty h2 {
-            margin-bottom: 20px;
-            color: var(--text);
-        }
+        .empty h2 { margin-bottom: 20px; color: var(--text); }
 
         .fab {
             position: fixed;
@@ -233,17 +160,12 @@
             align-items: center;
         }
 
-        .filters select,
-        .filters button,
-        .filters input[type="text"] {
+        .filters select, .filters button, .filters input[type="text"] {
             min-width: 160px;
             padding: 10px 14px;
         }
 
-        .search-container {
-            flex: 1;
-            min-width: 250px;
-        }
+        .search-container { flex: 1; min-width: 250px; }
 
         .table-wrapper {
             max-height: 60vh;
@@ -262,8 +184,7 @@
             table-layout: auto;
         }
 
-        .table th,
-        .table td {
+        .table th, .table td {
             padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border);
@@ -283,13 +204,8 @@
             border-bottom: 2px solid var(--border);
         }
 
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .table tr:hover {
-            background: #f8fafc;
-        }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover { background: #f8fafc; }
 
         .img-evidencia {
             max-width: 80px;
@@ -299,9 +215,7 @@
             cursor: pointer;
             transition: transform 0.2s;
         }
-        .img-evidencia:hover {
-            transform: scale(1.05);
-        }
+        .img-evidencia:hover { transform: scale(1.05); }
 
         .pagination {
             display: flex;
@@ -317,18 +231,59 @@
             min-width: 40px;
         }
 
-        .pagination button.active {
-            background: var(--pri);
-            color: white;
+        .pagination button.active { background: var(--pri); color: white; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Modal de carga */
+        #loadingModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
 
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .loading-content {
+            background: white;
+            padding: 32px 48px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 280px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--pri);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loadingModal p {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text);
         }
     </style>
 </head>
 <body>
+
+<div id="loadingModal">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Guardando revisiones...</p>
+    </div>
+</div>
 
 <div class="wrap" id="formView">
     <div class="head">
@@ -420,46 +375,11 @@
         <div class="field">
             <label class="label">Elementos disponibles</label>
             <div class="checks">
-                <div>
-                    <label>Televisor</label>
-                    <select class="el-televisor">
-                        <option value="no selecciono">Seleccione...</option>
-                        <option value="Funciona">Funciona</option>
-                        <option value="No funciona">No funciona</option>
-                        <option value="No tiene">No tiene</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Cable HDMI</label>
-                    <select class="el-hdmi">
-                        <option value="no selecciono">Seleccione...</option>
-                        <option value="Funciona">Funciona</option>
-                        <option value="No funciona">No funciona</option>
-                        <option value="No tiene">No tiene</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Cámara</label>
-                    <select class="el-camara">
-                        <option value="no selecciono">Seleccione...</option>
-                        <option value="Funciona">Funciona</option>
-                        <option value="No funciona">No funciona</option>
-                        <option value="No tiene">No tiene</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Control</label>
-                    <select class="el-control">
-                        <option value="no selecciono">Seleccione...</option>
-                        <option value="Funciona">Funciona</option>
-                        <option value="No funciona">No funciona</option>
-                        <option value="No tiene">No tiene</option>
-                    </select>
-                </div>
-                <div>
-                    <label>¿Tiene micrófonos externos?</label>
-                    <input type="checkbox" class="el-microfonos">
-                </div>
+                <div><label>Televisor</label><select class="el-televisor"><option value="no selecciono">Seleccione...</option><option value="Funciona">Funciona</option><option value="No funciona">No funciona</option><option value="No tiene">No tiene</option></select></div>
+                <div><label>Cable HDMI</label><select class="el-hdmi"><option value="no selecciono">Seleccione...</option><option value="Funciona">Funciona</option><option value="No funciona">No funciona</option><option value="No tiene">No tiene</option></select></div>
+                <div><label>Cámara</label><select class="el-camara"><option value="no selecciono">Seleccione...</option><option value="Funciona">Funciona</option><option value="No funciona">No funciona</option><option value="No tiene">No tiene</option></select></div>
+                <div><label>Control</label><select class="el-control"><option value="no selecciono">Seleccione...</option><option value="Funciona">Funciona</option><option value="No funciona">No funciona</option><option value="No tiene">No tiene</option></select></div>
+                <div><label>¿Tiene micrófonos externos?</label><input type="checkbox" class="el-microfonos"></div>
             </div>
         </div>
         <div class="field">
@@ -497,6 +417,8 @@ const filterUsuario = document.getElementById("filterUsuario");
 const filterFecha = document.getElementById("filterFecha");
 const searchInput = document.getElementById("searchInput");
 const paginationControls = document.getElementById("paginationControls");
+const createBtn = document.getElementById("createBtn");
+const loadingModal = document.getElementById("loadingModal");
 
 let usuarios = [];
 let currentData = [];
@@ -557,49 +479,61 @@ async function guardarRevisiones(){
     const rooms = [...document.querySelectorAll('.room')];
     if(!rooms.length) return;
 
-    const data = [];
-    for(const card of rooms){
-        const fileInput = card.querySelector('.evidencia_img');
-        const file = fileInput.files[0];
-        let uniqueImageName = null;
+    // Mostrar modal y deshabilitar botón
+    loadingModal.style.display = 'flex';
+    createBtn.disabled = true;
+    createBtn.textContent = "Guardando...";
 
-        if(file){
-            const ext = file.name.split('.').pop();
-            const now = new Date();
-            const timestamp = now.toLocaleString('sv-SE', { timeZone: 'America/Bogota' })
-                .replace(/[^0-9]/g, '')
-                .slice(0, 14);
-            const random = Math.floor(Math.random()*100000);
-            uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
-            await conexion.storage.from('Imagenes_Evidencia').upload(uniqueImageName, file);
+    try {
+        const data = [];
+        for(const card of rooms){
+            const fileInput = card.querySelector('.evidencia_img');
+            const file = fileInput.files[0];
+            let uniqueImageName = null;
+
+            if(file){
+                const ext = file.name.split('.').pop();
+                const now = new Date();
+                const timestamp = now.toLocaleString('sv-SE', { timeZone: 'America/Bogota' })
+                    .replace(/[^0-9]/g, '')
+                    .slice(0, 14);
+                const random = Math.floor(Math.random()*100000);
+                uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
+                await conexion.storage.from('Imagenes_Evidencia').upload(uniqueImageName, file);
+            }
+
+            data.push({
+                nombre_sala: card.querySelector('.room-name').value.trim() || null,
+                usuario_creador: parseInt(card.querySelector('.usuario-creador').value) || null,
+                serial_camara: card.querySelector('.serial-camara').value.trim() || null,
+                estado_tv: card.querySelector('.el-televisor').value || null,
+                estado_hdmi: card.querySelector('.el-hdmi').value || null,
+                estado_camara: card.querySelector('.el-camara').value || null,
+                estado_control: card.querySelector('.el-control').value || null,
+                microfonos_externos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
+                estado_sala: card.querySelector('.estado').value || null,
+                detalles_extra: card.querySelector('.detalles').value.trim() || null,
+                fecha_revision: new Date().toISOString(),
+                evidencia_img: uniqueImageName
+            });
         }
 
-        data.push({
-            nombre_sala: card.querySelector('.room-name').value.trim() || null,
-            usuario_creador: parseInt(card.querySelector('.usuario-creador').value) || null,
-            serial_camara: card.querySelector('.serial-camara').value.trim() || null,
-            estado_tv: card.querySelector('.el-televisor').value || null,
-            estado_hdmi: card.querySelector('.el-hdmi').value || null,
-            estado_camara: card.querySelector('.el-camara').value || null,
-            estado_control: card.querySelector('.el-control').value || null,
-            microfonos_externos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
-            estado_sala: card.querySelector('.estado').value || null,
-            detalles_extra: card.querySelector('.detalles').value.trim() || null,
-            fecha_revision: new Date().toISOString(),
-            evidencia_img: uniqueImageName
-        });
-    }
+        const { error } = await conexion.from('revision_salas').insert(data);
+        if(error) throw error;
 
-    const { error } = await conexion.from('revision_salas').insert(data);
-    if(error){
-        console.error("Error insertando en la DB:", error);
-        alert("No se pudo guardar en la base de datos");
-        return;
-    }
+        // Éxito → limpiar vista
+        roomsContainer.innerHTML = "";
+        updateUI();
 
-    // Limpieza de la vista después de guardar
-    roomsContainer.innerHTML = "";
-    updateUI();
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        alert("No se pudo guardar en la base de datos. Intenta de nuevo.");
+    } finally {
+        // Siempre ocultar modal y reactivar botón (si hubo error)
+        loadingModal.style.display = 'none';
+        createBtn.disabled = false;
+        createBtn.textContent = "Guardar";
+    }
 }
 
 function renderPage(page) {
