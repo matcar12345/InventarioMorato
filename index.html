@@ -333,7 +333,7 @@
                 <th>Micrófonos</th>
                 <th>Serial Cámara</th>
                 <th>Detalles</th>
-                <th>Fecha</th>
+                <th>Fecha y hora</th>
                 <th>Evidencia</th>
             </tr>
         </thead>
@@ -427,7 +427,6 @@
 </template>
 
 <script>
-// El script permanece exactamente igual al que me pasaste
 const ApiURL = "https://rpeencgsnhjjmohuvwgj.supabase.co";
 const publicKeySupabase = "sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co";
 const conexion = supabase.createClient(ApiURL, publicKeySupabase);
@@ -506,12 +505,9 @@ async function exportExcel(){
         if(file){
             const ext = file.name.split('.').pop();
             const now = new Date();
-            const timestamp = now.getFullYear().toString()+
-                              (now.getMonth()+1).toString().padStart(2,'0')+
-                              now.getDate().toString().padStart(2,'0')+"_"+
-                              now.getHours().toString().padStart(2,'0')+
-                              now.getMinutes().toString().padStart(2,'0')+
-                              now.getSeconds().toString().padStart(2,'0');
+            const timestamp = now.toLocaleString('sv-SE', { timeZone: 'America/Bogota' })
+                .replace(/[^0-9]/g, '')
+                .slice(0, 14);
             const random = Math.floor(Math.random()*100000);
             uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
             await conexion.storage.from('Imagenes_Evidencia').upload(uniqueImageName, file);
@@ -528,7 +524,7 @@ async function exportExcel(){
             microfonos_externos: card.querySelector('.el-microfonos').checked ? 'Si tiene' : 'No tiene',
             estado_sala: card.querySelector('.estado').value || null,
             detalles_extra: card.querySelector('.detalles').value.trim() || null,
-            fecha_revision: new Date().toISOString().split('T')[0],
+            fecha_revision: new Date().toISOString(),
             evidencia_img: uniqueImageName
         });
     }
@@ -540,6 +536,16 @@ async function exportExcel(){
         return;
     }
 
+    const now = new Date().toLocaleString('es-CO', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).replace(/[/,: ]/g, '-');
+
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Salas');
@@ -547,7 +553,7 @@ async function exportExcel(){
     const blob = new Blob([wbout], { type:'application/octet-stream' });
 
     const fileHandle = await window.showSaveFilePicker({
-        suggestedName:`Inventario_Salas_${Date.now()}.xlsx`,
+        suggestedName:`Inventario_Salas_${now}.xlsx`,
         types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
     });
     const writable = await fileHandle.createWritable();
@@ -564,14 +570,19 @@ async function buscarRegistros(){
     const fecha = filterFecha.value;
 
     if(usuario !== 'todos') query = query.eq('usuario_creador', usuario);
+
     const now = new Date();
-    if(fecha==='hoy') query=query.gte('fecha_revision', new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString());
+    if(fecha==='hoy'){
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query = query.gte('fecha_revision', start.toISOString());
+    }
     else if(fecha==='semana'){
-        const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const firstDayOfWeek = new Date(now);
+        firstDayOfWeek.setDate(now.getDate() - now.getDay());
         query = query.gte('fecha_revision', firstDayOfWeek.toISOString());
     }
     else if(fecha==='mes'){
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(),1);
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         query = query.gte('fecha_revision', firstDayOfMonth.toISOString());
     }
 
@@ -582,6 +593,15 @@ async function buscarRegistros(){
         let urlImg = '';
         if(r.evidencia_img) urlImg = conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl;
         const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido';
+        const fechaHoraCol = new Date(r.fecha_revision).toLocaleString('es-CO', {
+            timeZone: 'America/Bogota',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${r.nombre_sala}</td>
                         <td>${usuarioNombre}</td>
@@ -592,8 +612,8 @@ async function buscarRegistros(){
                         <td>${r.estado_control}</td>
                         <td>${r.microfonos_externos}</td>
                         <td>${r.serial_camara}</td>
-                        <td>${r.detalles_extra}</td>
-                        <td>${new Date(r.fecha_revision).toLocaleString()}</td>
+                        <td>${r.detalles_extra || ''}</td>
+                        <td>${fechaHoraCol}</td>
                         <td>${urlImg?'<img class="img-evidencia" src="'+urlImg+'" onclick="window.open(\''+urlImg+'\', \'_blank\')" />':''}</td>`;
         tablaResultados.appendChild(tr);
     }
@@ -601,6 +621,17 @@ async function buscarRegistros(){
 
 async function exportFiltered(){
     if(!currentData.length) return;
+
+    const now = new Date().toLocaleString('es-CO', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).replace(/[/,: ]/g, '-');
+
     const dataForExcel = currentData.map(r => ({
         Sala: r.nombre_sala,
         Usuario: usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido',
@@ -612,7 +643,15 @@ async function exportFiltered(){
         Micrófonos: r.microfonos_externos,
         'Serial Cámara': r.serial_camara,
         Detalles: r.detalles_extra,
-        Fecha: new Date(r.fecha_revision).toLocaleString(),
+        'Fecha y hora': new Date(r.fecha_revision).toLocaleString('es-CO', {
+            timeZone: 'America/Bogota',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }),
         Evidencia: r.evidencia_img ? conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl : ''
     }));
     const wb = XLSX.utils.book_new();
@@ -622,7 +661,7 @@ async function exportFiltered(){
     const blob = new Blob([wbout], { type:'application/octet-stream' });
 
     const fileHandle = await window.showSaveFilePicker({
-        suggestedName:`Registros_Filtrados_${Date.now()}.xlsx`,
+        suggestedName:`Registros_Filtrados_${now}.xlsx`,
         types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
     });
     const writable = await fileHandle.createWritable();
