@@ -229,40 +229,64 @@
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            margin: 24px 0 32px;
+            margin: 24px 0 16px;
             align-items: center;
         }
 
         .filters select,
-        .filters button {
+        .filters button,
+        .filters input[type="text"] {
             min-width: 160px;
+            padding: 10px 14px;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .table-wrapper {
+            max-height: 60vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 16px;
+            background: white;
         }
 
         .table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-top: 20px;
-            background: white;
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
+            table-layout: auto;
         }
+
         .table th,
         .table td {
             padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
         .table th {
             background: #f1f5f9;
             font-weight: 600;
             color: var(--text);
             font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border-bottom: 2px solid var(--border);
         }
+
         .table tr:last-child td {
             border-bottom: none;
         }
+
         .table tr:hover {
             background: #f8fafc;
         }
@@ -277,6 +301,30 @@
         }
         .img-evidencia:hover {
             transform: scale(1.05);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .pagination button {
+            padding: 8px 14px;
+            min-width: 40px;
+        }
+
+        .pagination button.active {
+            background: var(--pri);
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -296,7 +344,7 @@
     </div>
 
     <div class="footer hidden" id="footerActions">
-        <button class="btn btn-primary" id="createBtn">Guardar y generar Excel</button>
+        <button class="btn btn-primary" id="createBtn">Guardar</button>
     </div>
 </div>
 
@@ -318,27 +366,35 @@
         </select>
         <button class="btn btn-primary" id="buscarBtn">Buscar</button>
         <button class="btn btn-primary" id="exportFilteredBtn">Generar Excel</button>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar en sala, usuario, detalles...">
+        </div>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Sala</th>
-                <th>Usuario</th>
-                <th>Estado Sala</th>
-                <th>TV</th>
-                <th>HDMI</th>
-                <th>Cámara</th>
-                <th>Control</th>
-                <th>Micrófonos</th>
-                <th>Serial Cámara</th>
-                <th>Detalles</th>
-                <th>Fecha y hora</th>
-                <th>Evidencia</th>
-            </tr>
-        </thead>
-        <tbody id="tablaResultados"></tbody>
-    </table>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sala</th>
+                    <th>Usuario</th>
+                    <th>Estado Sala</th>
+                    <th>TV</th>
+                    <th>HDMI</th>
+                    <th>Cámara</th>
+                    <th>Control</th>
+                    <th>Micrófonos</th>
+                    <th>Serial Cámara</th>
+                    <th>Detalles</th>
+                    <th>Fecha y hora</th>
+                    <th>Evidencia</th>
+                </tr>
+            </thead>
+            <tbody id="tablaResultados"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="paginationControls"></div>
 </div>
 
 <template id="roomTemplate">
@@ -439,9 +495,14 @@ const tmpl = document.getElementById("roomTemplate");
 const tablaResultados = document.getElementById("tablaResultados");
 const filterUsuario = document.getElementById("filterUsuario");
 const filterFecha = document.getElementById("filterFecha");
+const searchInput = document.getElementById("searchInput");
+const paginationControls = document.getElementById("paginationControls");
 
 let usuarios = [];
 let currentData = [];
+let filteredData = [];
+let currentPage = 1;
+const rowsPerPage = 10;
 
 async function loadUsuarios(){
     const { data } = await conexion.from("usuarios").select("id,nombre");
@@ -492,7 +553,7 @@ function fillUsuarios(){
     });
 }
 
-async function exportExcel(){
+async function guardarRevisiones(){
     const rooms = [...document.querySelectorAll('.room')];
     if(!rooms.length) return;
 
@@ -536,32 +597,111 @@ async function exportExcel(){
         return;
     }
 
-    const now = new Date().toLocaleString('es-CO', {
-        timeZone: 'America/Bogota',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).replace(/[/,: ]/g, '-');
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, 'Salas');
-    const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-    const blob = new Blob([wbout], { type:'application/octet-stream' });
-
-    const fileHandle = await window.showSaveFilePicker({
-        suggestedName:`Inventario_Salas_${now}.xlsx`,
-        types:[{ description:'Excel File', accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]
-    });
-    const writable = await fileHandle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-
-    roomsContainer.innerHTML="";
+    // Limpieza de la vista después de guardar
+    roomsContainer.innerHTML = "";
     updateUI();
+}
+
+function renderPage(page) {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageItems = filteredData.slice(start, end);
+
+    tablaResultados.innerHTML = '';
+    for(const r of pageItems){
+        let urlImg = '';
+        if(r.evidencia_img) urlImg = conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl;
+        const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido';
+        const fechaHoraCol = new Date(r.fecha_revision).toLocaleString('es-CO', {
+            timeZone: 'America/Bogota',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.nombre_sala || ''}</td>
+                        <td>${usuarioNombre}</td>
+                        <td>${r.estado_sala || ''}</td>
+                        <td>${r.estado_tv || ''}</td>
+                        <td>${r.estado_hdmi || ''}</td>
+                        <td>${r.estado_camara || ''}</td>
+                        <td>${r.estado_control || ''}</td>
+                        <td>${r.microfonos_externos || ''}</td>
+                        <td>${r.serial_camara || ''}</td>
+                        <td>${r.detalles_extra || ''}</td>
+                        <td>${fechaHoraCol}</td>
+                        <td>${urlImg ? '<img class="img-evidencia" src="'+urlImg+'" onclick="window.open(\''+urlImg+'\', \'_blank\')" />' : ''}</td>`;
+        tablaResultados.appendChild(tr);
+    }
+}
+
+function updatePaginationControls() {
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    paginationControls.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    const prev = document.createElement('button');
+    prev.textContent = 'Anterior';
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage(currentPage);
+            updatePaginationControls();
+        }
+    };
+    paginationControls.appendChild(prev);
+
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = i === currentPage ? 'active' : '';
+        btn.onclick = () => {
+            currentPage = i;
+            renderPage(currentPage);
+            updatePaginationControls();
+        };
+        paginationControls.appendChild(btn);
+    }
+
+    const next = document.createElement('button');
+    next.textContent = 'Siguiente';
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderPage(currentPage);
+            updatePaginationControls();
+        }
+    };
+    paginationControls.appendChild(next);
+}
+
+function applyFiltersAndSearch() {
+    let tempData = [...currentData];
+
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (searchTerm) {
+        tempData = tempData.filter(r => {
+            const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre?.toLowerCase() || '';
+            return (
+                (r.nombre_sala || '').toLowerCase().includes(searchTerm) ||
+                usuarioNombre.includes(searchTerm) ||
+                (r.estado_sala || '').toLowerCase().includes(searchTerm) ||
+                (r.detalles_extra || '').toLowerCase().includes(searchTerm) ||
+                (r.serial_camara || '').toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+
+    filteredData = tempData;
+    currentPage = 1;
+    renderPage(currentPage);
+    updatePaginationControls();
 }
 
 async function buscarRegistros(){
@@ -587,40 +727,16 @@ async function buscarRegistros(){
     }
 
     const { data } = await query;
-    currentData = data;
-    tablaResultados.innerHTML = '';
-    for(const r of data){
-        let urlImg = '';
-        if(r.evidencia_img) urlImg = conexion.storage.from('Imagenes_Evidencia').getPublicUrl(r.evidencia_img).data.publicUrl;
-        const usuarioNombre = usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido';
-        const fechaHoraCol = new Date(r.fecha_revision).toLocaleString('es-CO', {
-            timeZone: 'America/Bogota',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${r.nombre_sala}</td>
-                        <td>${usuarioNombre}</td>
-                        <td>${r.estado_sala}</td>
-                        <td>${r.estado_tv}</td>
-                        <td>${r.estado_hdmi}</td>
-                        <td>${r.estado_camara}</td>
-                        <td>${r.estado_control}</td>
-                        <td>${r.microfonos_externos}</td>
-                        <td>${r.serial_camara}</td>
-                        <td>${r.detalles_extra || ''}</td>
-                        <td>${fechaHoraCol}</td>
-                        <td>${urlImg?'<img class="img-evidencia" src="'+urlImg+'" onclick="window.open(\''+urlImg+'\', \'_blank\')" />':''}</td>`;
-        tablaResultados.appendChild(tr);
-    }
+    currentData = data || [];
+    filteredData = [...currentData];
+    currentPage = 1;
+
+    renderPage(currentPage);
+    updatePaginationControls();
 }
 
 async function exportFiltered(){
-    if(!currentData.length) return;
+    if(!filteredData.length) return;
 
     const now = new Date().toLocaleString('es-CO', {
         timeZone: 'America/Bogota',
@@ -632,7 +748,7 @@ async function exportFiltered(){
         hour12: false
     }).replace(/[/,: ]/g, '-');
 
-    const dataForExcel = currentData.map(r => ({
+    const dataForExcel = filteredData.map(r => ({
         Sala: r.nombre_sala,
         Usuario: usuarios.find(u=>u.id===r.usuario_creador)?.nombre || 'Desconocido',
         'Estado Sala': r.estado_sala,
@@ -669,9 +785,13 @@ async function exportFiltered(){
     await writable.close();
 }
 
+function setupSearchFilter() {
+    searchInput.addEventListener('input', applyFiltersAndSearch);
+}
+
 document.getElementById("addFirstRoomBtn").onclick = addRoom;
 floatingBtn.onclick = addRoom;
-document.getElementById("createBtn").onclick = exportExcel;
+document.getElementById("createBtn").onclick = guardarRevisiones;
 document.getElementById("viewRecordsBtn").onclick = () => {
     document.getElementById("formView").classList.add("hidden");
     document.getElementById("recordsView").classList.remove("hidden");
@@ -685,6 +805,7 @@ document.getElementById("exportFilteredBtn").onclick = exportFiltered;
 
 loadUsuarios();
 updateUI();
+setupSearchFilter();
 </script>
 
 </body>
