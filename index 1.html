@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Salas</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --pri: #6366f1;
+            --pri-dark: #4f46e5;
+            --pri-light: #818cf8;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .btn,
+        button {
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        .btn-primary {
+            background: var(--pri);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--pri-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            transition: box-shadow 0.2s ease;
+            overflow: visible;
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: #e0e7ff;
+            color: var(--pri-dark);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .field {
+            margin: 20px 0;
+            overflow: visible;
+        }
+
+        .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 15px;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        select {
+            height: 46px;
+            min-height: 46px;
+            max-height: 46px;
+            padding: 0 14px;
+            line-height: 46px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            appearance: auto;
+            -webkit-appearance: auto;
+            -moz-appearance: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--pri);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        textarea[readonly] {
+            background: #f8fafc;
+        }
+
+        .checks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px 24px;
+        }
+
+        .checks label {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 100px 20px;
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            color: var(--text-muted);
+            margin: 60px 0;
+        }
+
+        .empty h2 {
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--pri);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 16px 28px;
+            font-size: 18px;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(99,102,241,0.35);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            background: var(--pri-dark);
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 12px 28px rgba(99,102,241,0.45);
+        }
+
+        .footer {
+            position: sticky;
+            bottom: 0;
+            background: rgba(248,250,252,0.96);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            margin-top: 40px;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 90;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0 16px;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters button,
+        .filters input[type="text"] {
+            min-width: 160px;
+            padding: 10px 14px;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .table-wrapper {
+            max-height: 56vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 16px;
+            background: white;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: auto;
+        }
+
+        .table th,
+        .table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .table th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .img-evidencia {
+            max-width: 80px;
+            max-height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .img-evidencia:hover {
+            transform: scale(1.05);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .pagination button {
+            padding: 8px 14px;
+            min-width: 40px;
+        }
+
+        .pagination button.active {
+            background: var(--pri);
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #loadingModal,
+        #salaModal,
+        #sedeModal,
+        #planModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .loading-content,
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: min(100%, 560px);
+            max-height: 88vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            color: var(--text);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--pri);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loadingModal p {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 8px;
+            color: var(--text);
+        }
+
+        .stat-sub {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .chart-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow-md);
+            width: min(100%, 760px);
+            margin: 0 auto 20px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        .status-link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--pri-dark);
+            font-weight: 700;
+        }
+
+        .plan-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 8px;
+        }
+
+        .plan-info-item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+
+        .plan-info-title {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .plan-info-text {
+            color: var(--text);
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .select-disabled {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingModal">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Guardando revisiones...</p>
+    </div>
+</div>
+
+<div id="salaModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Agregar sala</h2>
+            <button class="btn btn-outline" id="closeSalaModalBtn">Cerrar</button>
+        </div>
+        <div class="field">
+            <label class="label">Agregar nombre sala</label>
+            <input type="text" id="nuevoNombreSala" placeholder="Ej: Sala de juntas" />
+        </div>
+        <div class="field">
+            <label class="label">Agregar sede sala</label>
+            <select id="salaSedeId">
+                <option value="">Seleccione una sede</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="label">Agregar piso sala</label>
+            <input type="text" id="nuevoPisoSala" placeholder="Ej: Piso 3" />
+        </div>
+        <div class="field">
+            <label class="label">Imagen</label>
+            <input type="file" id="nuevaImagenSala" accept="image/*" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="cancelSalaBtn">Cancelar</button>
+            <button class="btn btn-primary" id="saveSalaBtn">Guardar sala</button>
+        </div>
+    </div>
+</div>
+
+<div id="sedeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Agregar sede</h2>
+            <button class="btn btn-outline" id="closeSedeModalBtn">Cerrar</button>
+        </div>
+        <div class="field">
+            <label class="label">Nombre de sede</label>
+            <input type="text" id="nuevoNombreSede" placeholder="Ej: Morato" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="cancelSedeBtn">Cancelar</button>
+            <button class="btn btn-primary" id="saveSedeBtn">Guardar sede</button>
+        </div>
+    </div>
+</div>
+
+<div id="planModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Plan de acción</h2>
+            <button class="btn btn-outline" id="closePlanBtn">Cerrar</button>
+        </div>
+        <div class="plan-info-grid">
+            <div class="plan-info-item">
+                <div class="plan-info-title">Sala</div>
+                <div class="plan-info-text" id="planSalaInfo"></div>
+            </div>
+            <div class="plan-info-item">
+                <div class="plan-info-title">Sede</div>
+                <div class="plan-info-text" id="planSedeInfo"></div>
+            </div>
+            <div class="plan-info-item">
+                <div class="plan-info-title">Usuario</div>
+                <div class="plan-info-text" id="planUsuarioInfo"></div>
+            </div>
+            <div class="plan-info-item">
+                <div class="plan-info-title">Fecha</div>
+                <div class="plan-info-text" id="planFechaInfo"></div>
+            </div>
+            <div class="plan-info-item">
+                <div class="plan-info-title">Estado</div>
+                <div class="plan-info-text" id="planEstadoInfo"></div>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label">Información / detalle</label>
+            <textarea id="planDetallesInfo" readonly></textarea>
+        </div>
+        <div class="field">
+            <label class="label">Plan de acción</label>
+            <textarea id="planAccionInput" readonly placeholder="Escribe el plan de acción..."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="editPlanBtn">Editar</button>
+            <button class="btn btn-primary hidden" id="savePlanBtn">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<div class="wrap" id="formView">
+    <div class="head">
+        <h1>Gestión de Salas</h1>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="addSalaBtn">+ Agregar sala</button>
+            <button class="btn btn-primary" id="addSedeBtn">+ Agregar sede</button>
+            <button class="btn btn-outline" id="viewRecordsBtn">Ver registros</button>
+            <button class="btn btn-outline" id="viewStatsBtn">Ver estadísticas</button>
+        </div>
+    </div>
+
+    <div id="roomsContainer" class="grid"></div>
+
+    <div id="emptyState" class="empty">
+        <h2>Aún no hay salas registradas</h2>
+        <button class="btn btn-primary" id="addFirstRoomBtn">+ Agregar registro de sala</button>
+    </div>
+
+    <div class="footer hidden" id="footerActions">
+        <button class="btn btn-primary" id="createBtn">Guardar</button>
+    </div>
+</div>
+
+<button class="fab hidden" id="floatingAddBtn">+ Agregar registro de sala</button>
+
+<div class="wrap hidden" id="recordsView">
+    <div class="head">
+        <h1>Consulta de Registros</h1>
+        <button class="btn btn-outline" id="backBtn">← Volver</button>
+    </div>
+
+    <div class="filters">
+        <select id="filterUsuario"></select>
+        <select id="filterSede">
+            <option value="todas">Todas las sedes</option>
+        </select>
+        <select id="filterFecha">
+            <option value="todas">Todas las fechas</option>
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+        </select>
+        <select id="filterUltima">
+            <option value="no">Todas las revisiones</option>
+            <option value="si">Traer última revisión por sala</option>
+        </select>
+        <button class="btn btn-primary" id="buscarBtn">Buscar</button>
+        <button class="btn btn-primary" id="exportFilteredBtn">Generar Excel</button>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar en sala, sede, usuario, detalles..." />
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sala</th>
+                    <th>Sede</th>
+                    <th>Usuario</th>
+                    <th>Estado Sala</th>
+                    <th>TV</th>
+                    <th>HDMI</th>
+                    <th>Cámara</th>
+                    <th>Control</th>
+                    <th>Micrófonos</th>
+                    <th>Serial Cámara</th>
+                    <th>Detalles</th>
+                    <th>Fecha y hora</th>
+                    <th>Evidencia</th>
+                </tr>
+            </thead>
+            <tbody id="tablaResultados"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="paginationControls"></div>
+</div>
+
+<div class="wrap hidden" id="statsView">
+    <div class="head">
+        <h1>Estadísticas</h1>
+        <button class="btn btn-outline" id="backStatsBtn">← Volver</button>
+    </div>
+
+    <div class="filters">
+        <select id="statsSedeFilter">
+            <option value="todas">Todas las sedes</option>
+        </select>
+        <button class="btn btn-primary" id="refreshStatsBtn">Actualizar</button>
+    </div>
+
+    <div class="stats-grid" id="statsCards"></div>
+
+    <div class="chart-card">
+        <div class="chart-wrap">
+            <canvas id="statsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<template id="roomTemplate">
+    <div class="card room">
+        <div class="card-head">
+            <span class="badge">Sala</span>
+            <button class="btn btn-danger" onclick="removeRoom(this.closest('.room'))">Eliminar</button>
+        </div>
+        <div class="field">
+            <label class="label">Sede</label>
+            <select class="sede-select">
+                <option value="">Seleccione una sede</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="label">Nombre de la sala</label>
+            <select class="room-name" disabled>
+                <option value="">Seleccione primero una sede</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="label">Usuario creador</label>
+            <select class="usuario-creador">
+                <option value="">Seleccione un usuario</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="label">Serial de cámara</label>
+            <input type="text" class="serial-camara" placeholder="Ej: CAM-123456" />
+        </div>
+        <div class="field">
+            <label class="label">Elementos disponibles</label>
+            <div class="checks">
+                <div>
+                    <label>Televisor</label>
+                    <select class="el-televisor">
+                        <option value="no selecciono">Seleccione...</option>
+                        <option value="Funciona">Funciona</option>
+                        <option value="No funciona">No funciona</option>
+                        <option value="No tiene">No tiene</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Cable HDMI</label>
+                    <select class="el-hdmi">
+                        <option value="no selecciono">Seleccione...</option>
+                        <option value="Funciona">Funciona</option>
+                        <option value="No funciona">No funciona</option>
+                        <option value="No tiene">No tiene</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Cámara</label>
+                    <select class="el-camara">
+                        <option value="no selecciono">Seleccione...</option>
+                        <option value="Funciona">Funciona</option>
+                        <option value="No funciona">No funciona</option>
+                        <option value="No tiene">No tiene</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Control</label>
+                    <select class="el-control">
+                        <option value="no selecciono">Seleccione...</option>
+                        <option value="Funciona">Funciona</option>
+                        <option value="No funciona">No funciona</option>
+                        <option value="No tiene">No tiene</option>
+                    </select>
+                </div>
+                <div>
+                    <label>¿Tiene micrófonos externos?</label>
+                    <input type="checkbox" class="el-microfonos" />
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label">Estado actual de la sala</label>
+            <select class="estado">
+                <option value="no selecciono">Seleccione...</option>
+                <option value="Operativa">Operativa</option>
+                <option value="Incompleta">Incompleta</option>
+                <option value="Inoperativa">Inoperativa</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="label">Detalles / observaciones</label>
+            <textarea class="detalles" placeholder="Escribe cualquier detalle adicional..."></textarea>
+        </div>
+        <div class="field">
+            <label class="label">Evidencia fotográfica</label>
+            <input type="file" class="evidencia_img" accept="image/*" />
+        </div>
+    </div>
+</template>
+
+<script>
+    const conexion = supabase.createClient(
+        "https://rpeencgsnhjjmohuvwgj.supabase.co",
+        "sb_publishable_KcW3KAlFV4fUpYNJswVKoA_jqsmr_Co"
+    );
+
+    const roomsContainer = document.getElementById("roomsContainer");
+    const emptyState = document.getElementById("emptyState");
+    const footer = document.getElementById("footerActions");
+    const floatingBtn = document.getElementById("floatingAddBtn");
+    const tmpl = document.getElementById("roomTemplate");
+    const tablaResultados = document.getElementById("tablaResultados");
+    const filterUsuario = document.getElementById("filterUsuario");
+    const filterSede = document.getElementById("filterSede");
+    const filterFecha = document.getElementById("filterFecha");
+    const filterUltima = document.getElementById("filterUltima");
+    const searchInput = document.getElementById("searchInput");
+    const paginationControls = document.getElementById("paginationControls");
+    const createBtn = document.getElementById("createBtn");
+    const loadingModal = document.getElementById("loadingModal");
+    const salaModal = document.getElementById("salaModal");
+    const sedeModal = document.getElementById("sedeModal");
+    const planModal = document.getElementById("planModal");
+    const addSalaBtn = document.getElementById("addSalaBtn");
+    const addSedeBtn = document.getElementById("addSedeBtn");
+    const closeSalaModalBtn = document.getElementById("closeSalaModalBtn");
+    const cancelSalaBtn = document.getElementById("cancelSalaBtn");
+    const saveSalaBtn = document.getElementById("saveSalaBtn");
+    const nuevoNombreSala = document.getElementById("nuevoNombreSala");
+    const salaSedeId = document.getElementById("salaSedeId");
+    const nuevoPisoSala = document.getElementById("nuevoPisoSala");
+    const nuevaImagenSala = document.getElementById("nuevaImagenSala");
+    const closeSedeModalBtn = document.getElementById("closeSedeModalBtn");
+    const cancelSedeBtn = document.getElementById("cancelSedeBtn");
+    const saveSedeBtn = document.getElementById("saveSedeBtn");
+    const nuevoNombreSede = document.getElementById("nuevoNombreSede");
+    const closePlanBtn = document.getElementById("closePlanBtn");
+    const editPlanBtn = document.getElementById("editPlanBtn");
+    const savePlanBtn = document.getElementById("savePlanBtn");
+    const planSalaInfo = document.getElementById("planSalaInfo");
+    const planSedeInfo = document.getElementById("planSedeInfo");
+    const planUsuarioInfo = document.getElementById("planUsuarioInfo");
+    const planFechaInfo = document.getElementById("planFechaInfo");
+    const planEstadoInfo = document.getElementById("planEstadoInfo");
+    const planDetallesInfo = document.getElementById("planDetallesInfo");
+    const planAccionInput = document.getElementById("planAccionInput");
+    const viewStatsBtn = document.getElementById("viewStatsBtn");
+    const statsView = document.getElementById("statsView");
+    const backStatsBtn = document.getElementById("backStatsBtn");
+    const statsSedeFilter = document.getElementById("statsSedeFilter");
+    const refreshStatsBtn = document.getElementById("refreshStatsBtn");
+    const statsCards = document.getElementById("statsCards");
+    const statsChartCanvas = document.getElementById("statsChart");
+
+    let usuarios = [];
+    let sedes = [];
+    let salas = [];
+    let currentData = [];
+    let filteredData = [];
+    let statsRevisions = [];
+    let currentPage = 1;
+    let currentView = "form";
+    let selectedRevisionId = null;
+    let statsChartInstance = null;
+    const rowsPerPage = 10;
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    function updateBodyLock() {
+        const open = [loadingModal, salaModal, sedeModal, planModal].some(modal => modal.style.display === "flex");
+        document.body.classList.toggle("modal-open", open);
+    }
+
+    function openModal(modal) {
+        modal.style.display = "flex";
+        updateBodyLock();
+    }
+
+    function closeModal(modal) {
+        modal.style.display = "none";
+        updateBodyLock();
+    }
+
+    function showLoading() {
+        openModal(loadingModal);
+    }
+
+    function hideLoading() {
+        closeModal(loadingModal);
+    }
+
+    function setVisibleView(view) {
+        currentView = view;
+        document.getElementById("formView").classList.toggle("hidden", view !== "form");
+        document.getElementById("recordsView").classList.toggle("hidden", view !== "records");
+        statsView.classList.toggle("hidden", view !== "stats");
+
+        if (view === "form") {
+            updateUI();
+        } else {
+            floatingBtn.classList.add("hidden");
+            footer.classList.add("hidden");
+            emptyState.classList.add("hidden");
+        }
+    }
+
+    async function loadUsuarios() {
+        const { data } = await conexion
+            .from("usuarios")
+            .select("id,nombre")
+            .order("nombre", { ascending: true });
+
+        usuarios = data || [];
+        filterUsuario.innerHTML = '<option value="todos">Todos los usuarios</option>';
+
+        usuarios.forEach(u => {
+            const opt = document.createElement("option");
+            opt.value = u.id;
+            opt.textContent = u.nombre;
+            filterUsuario.appendChild(opt);
+        });
+    }
+
+    async function loadSedes() {
+        const { data } = await conexion
+            .from("sedes")
+            .select("id,nombre_sede")
+            .order("nombre_sede", { ascending: true });
+
+        sedes = data || [];
+        fillSedeSelects();
+        fillSedeFilters();
+        fillSalaModalSedes();
+    }
+
+    async function loadSalas() {
+        const { data } = await conexion
+            .from("salas")
+            .select("id,nombre_sala,sede_sala,piso_sala,ubicacion_sala")
+            .order("nombre_sala", { ascending: true });
+
+        salas = data || [];
+        fillSalaSelects();
+    }
+
+    function fillSedeSelects() {
+        document.querySelectorAll(".sede-select").forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Seleccione una sede</option>';
+
+            sedes.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                opt.textContent = s.nombre_sede;
+                select.appendChild(opt);
+            });
+
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+    }
+
+    function fillSedeFilters() {
+        const options = ['<option value="todas">Todas las sedes</option>']
+            .concat(sedes.map(s => `<option value="${s.id}">${escapeHtml(s.nombre_sede)}</option>`))
+            .join("");
+
+        filterSede.innerHTML = options;
+        statsSedeFilter.innerHTML = options;
+    }
+
+    function fillSalaModalSedes() {
+        const currentValue = salaSedeId.value;
+        salaSedeId.innerHTML = '<option value="">Seleccione una sede</option>';
+
+        sedes.forEach(s => {
+            const opt = document.createElement("option");
+            opt.value = s.id;
+            opt.textContent = s.nombre_sede;
+            salaSedeId.appendChild(opt);
+        });
+
+        if (currentValue) {
+            salaSedeId.value = currentValue;
+        }
+    }
+
+    function fillSalaSelects() {
+        document.querySelectorAll(".room").forEach(card => populateSalaSelect(card));
+    }
+
+    function getSedeById(id) {
+        return sedes.find(s => String(s.id) === String(id));
+    }
+
+    function getSalaById(id) {
+        return salas.find(s => String(s.id) === String(id));
+    }
+
+    function getUsuarioNombre(id) {
+        return usuarios.find(u => String(u.id) === String(id))?.nombre || "Desconocido";
+    }
+
+    function getSalaNombre(id) {
+        return getSalaById(id)?.nombre_sala || "";
+    }
+
+    function getSedeNombreBySalaId(salaId) {
+        const sala = getSalaById(salaId);
+        if (!sala) return "";
+        return getSedeById(sala.sede_sala)?.nombre_sede || "";
+    }
+
+    function getSedeIdBySalaId(salaId) {
+        return getSalaById(salaId)?.sede_sala || null;
+    }
+
+    function updateUI() {
+        const hasRooms = document.querySelectorAll(".room").length > 0;
+        emptyState.classList.toggle("hidden", hasRooms);
+        footer.classList.toggle("hidden", !hasRooms);
+        floatingBtn.classList.toggle("hidden", !hasRooms || currentView !== "form");
+    }
+
+    function scrollToLast() {
+        const last = document.querySelector(".room:last-child");
+        if (last) {
+            setTimeout(() => last.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+        }
+    }
+
+    function populateSalaSelect(card) {
+        const sedeId = card.querySelector(".sede-select").value;
+        const roomSelect = card.querySelector(".room-name");
+        const previousRoom = roomSelect.value;
+
+        roomSelect.innerHTML = "";
+
+        if (!sedeId) {
+            roomSelect.disabled = true;
+            roomSelect.classList.add("select-disabled");
+            roomSelect.innerHTML = '<option value="">Seleccione primero una sede</option>';
+            return;
+        }
+
+        const availableRooms = salas.filter(s => String(s.sede_sala) === String(sedeId));
+
+        if (!availableRooms.length) {
+            roomSelect.disabled = true;
+            roomSelect.classList.add("select-disabled");
+            roomSelect.innerHTML = '<option value="">No hay salas en esta sede</option>';
+            return;
+        }
+
+        roomSelect.disabled = false;
+        roomSelect.classList.remove("select-disabled");
+        roomSelect.innerHTML = '<option value="">Seleccione una sala</option>';
+
+        availableRooms.forEach(s => {
+            const opt = document.createElement("option");
+            opt.value = s.id;
+            opt.textContent = s.nombre_sala;
+            roomSelect.appendChild(opt);
+        });
+
+        if (previousRoom && availableRooms.some(s => String(s.id) === String(previousRoom))) {
+            roomSelect.value = previousRoom;
+        }
+    }
+
+    function isCardInvalidForOperativa(card) {
+        const invalidStates = ["No funciona", "No tiene"];
+        const values = [
+            card.querySelector(".el-televisor")?.value,
+            card.querySelector(".el-hdmi")?.value,
+            card.querySelector(".el-camara")?.value,
+            card.querySelector(".el-control")?.value
+        ];
+        return values.some(v => invalidStates.includes(v));
+    }
+
+    function syncEstadoOptions(card) {
+        const estado = card.querySelector(".estado");
+        const operativaOpt = estado.querySelector('option[value="Operativa"]');
+        const invalid = isCardInvalidForOperativa(card);
+
+        operativaOpt.disabled = invalid;
+
+        if (invalid && estado.value === "Operativa") {
+            estado.value = "Incompleta";
+        }
+    }
+
+    function wireRoomCard(card) {
+        const sedeSelect = card.querySelector(".sede-select");
+        const roomSelect = card.querySelector(".room-name");
+
+        sedeSelect.addEventListener("change", () => {
+            populateSalaSelect(card);
+        });
+
+        roomSelect.addEventListener("change", () => {});
+
+        [".el-televisor", ".el-hdmi", ".el-camara", ".el-control"].forEach(selector => {
+            const el = card.querySelector(selector);
+            el.addEventListener("change", () => syncEstadoOptions(card));
+        });
+
+        const estado = card.querySelector(".estado");
+        estado.addEventListener("change", () => {
+            if (estado.value === "Operativa" && isCardInvalidForOperativa(card)) {
+                estado.value = "Incompleta";
+            }
+        });
+
+        populateSalaSelect(card);
+        syncEstadoOptions(card);
+    }
+
+    function addRoom() {
+        const fragment = document.importNode(tmpl.content, true);
+        roomsContainer.appendChild(fragment);
+        const card = roomsContainer.lastElementChild;
+        wireRoomCard(card);
+        fillUsuariosInCards();
+        fillSedeSelects();
+        fillSalaSelects();
+        updateUI();
+        scrollToLast();
+    }
+
+    function removeRoom(card) {
+        card.remove();
+        updateUI();
+    }
+
+    function fillUsuariosInCards() {
+        document.querySelectorAll(".usuario-creador").forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Seleccione un usuario</option>';
+
+            usuarios.forEach(u => {
+                const opt = document.createElement("option");
+                opt.value = u.id;
+                opt.textContent = u.nombre;
+                select.appendChild(opt);
+            });
+
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+    }
+
+    async function guardarSede() {
+        const nombre = nuevoNombreSede.value.trim();
+
+        if (!nombre) {
+            alert("Escribe el nombre de la sede.");
+            return;
+        }
+
+        saveSedeBtn.disabled = true;
+        saveSedeBtn.textContent = "Guardando...";
+
+        try {
+            const { error } = await conexion.from("sedes").insert([{ nombre_sede: nombre }]);
+            if (error) throw error;
+
+            nuevoNombreSede.value = "";
+            closeModal(sedeModal);
+            await loadSedes();
+            fillSedeSelects();
+        } catch (error) {
+            console.error("Error al guardar sede:", error);
+            alert("No se pudo guardar la sede.");
+        } finally {
+            saveSedeBtn.disabled = false;
+            saveSedeBtn.textContent = "Guardar sede";
+        }
+    }
+
+    async function guardarSala() {
+        const nombre_sala = nuevoNombreSala.value.trim();
+        const sede_sala = salaSedeId.value;
+        const piso_sala = nuevoPisoSala.value.trim();
+        const file = nuevaImagenSala.files[0];
+
+        if (!nombre_sala || !sede_sala || !piso_sala || !file) {
+            alert("Completa nombre, sede, piso e imagen.");
+            return;
+        }
+
+        saveSalaBtn.disabled = true;
+        saveSalaBtn.textContent = "Guardando...";
+
+        try {
+            const ext = file.name.split(".").pop();
+            const timestamp = new Date()
+                .toLocaleString("sv-SE", { timeZone: "America/Bogota" })
+                .replace(/[^0-9]/g, "")
+                .slice(0, 14);
+            const random = Math.floor(Math.random() * 100000);
+            const uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
+
+            const { error: uploadError } = await conexion.storage
+                .from("Imagenes_Evidencia")
+                .upload(uniqueImageName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { error } = await conexion.from("salas").insert([{
+                nombre_sala,
+                sede_sala: Number(sede_sala),
+                piso_sala,
+                ubicacion_sala: uniqueImageName
+            }]);
+
+            if (error) throw error;
+
+            nuevoNombreSala.value = "";
+            salaSedeId.value = "";
+            nuevoPisoSala.value = "";
+            nuevaImagenSala.value = "";
+            closeModal(salaModal);
+            await loadSalas();
+            fillSalaSelects();
+            fillSalaModalSedes();
+        } catch (error) {
+            console.error("Error al guardar sala:", error);
+            alert("No se pudo guardar la sala.");
+        } finally {
+            saveSalaBtn.disabled = false;
+            saveSalaBtn.textContent = "Guardar sala";
+        }
+    }
+
+    function computeLatestBySala(revisions) {
+        const map = new Map();
+
+        for (const r of revisions) {
+            const key = String(r.sala_id);
+            const prev = map.get(key);
+            if (!prev || new Date(r.fecha_revision) > new Date(prev.fecha_revision)) {
+                map.set(key, r);
+            }
+        }
+
+        return [...map.values()];
+    }
+
+    async function loadAllRevisions() {
+        const { data, error } = await conexion
+            .from("revision_salas")
+            .select("*")
+            .order("fecha_revision", { ascending: false });
+
+        if (error) {
+            console.error(error);
+            currentData = [];
+            statsRevisions = [];
+            filteredData = [];
+            renderPage(1);
+            updatePaginationControls();
+            renderStats();
+            return;
+        }
+
+        currentData = data || [];
+        statsRevisions = [...currentData];
+        applyRecordFilters();
+        renderStats();
+    }
+
+    function applyRecordFilters() {
+        let data = [...currentData];
+
+        const usuario = filterUsuario.value;
+        const sede = filterSede.value;
+        const fecha = filterFecha.value;
+        const ultima = filterUltima.value;
+        const searchTerm = searchInput.value.toLowerCase().trim();
+
+        if (usuario !== "todos") {
+            data = data.filter(r => String(r.usuario_creador) === String(usuario));
+        }
+
+        if (sede !== "todas") {
+            data = data.filter(r => String(getSedeIdBySalaId(r.sala_id)) === String(sede));
+        }
+
+        const now = new Date();
+
+        if (fecha === "hoy") {
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            data = data.filter(r => new Date(r.fecha_revision) >= start);
+        } else if (fecha === "semana") {
+            const start = new Date(now);
+            start.setDate(now.getDate() - now.getDay());
+            data = data.filter(r => new Date(r.fecha_revision) >= start);
+        } else if (fecha === "mes") {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            data = data.filter(r => new Date(r.fecha_revision) >= start);
+        }
+
+        if (ultima === "si") {
+            data = computeLatestBySala(data);
+        }
+
+        if (searchTerm) {
+            data = data.filter(r => {
+                const usuarioNombre = getUsuarioNombre(r.usuario_creador).toLowerCase();
+                const salaNombre = getSalaNombre(r.sala_id).toLowerCase();
+                const sedeNombre = getSedeNombreBySalaId(r.sala_id).toLowerCase();
+                return (
+                    salaNombre.includes(searchTerm) ||
+                    sedeNombre.includes(searchTerm) ||
+                    usuarioNombre.includes(searchTerm) ||
+                    (r.estado_sala || "").toLowerCase().includes(searchTerm) ||
+                    (r.detalles_extra || "").toLowerCase().includes(searchTerm) ||
+                    (r.plan_accion || "").toLowerCase().includes(searchTerm) ||
+                    (r.serial_camara || "").toLowerCase().includes(searchTerm)
+                );
+            });
+        }
+
+        filteredData = data;
+        currentPage = 1;
+        renderPage(currentPage);
+        updatePaginationControls();
+    }
+
+    function renderPage(page) {
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageItems = filteredData.slice(start, end);
+
+        tablaResultados.innerHTML = "";
+
+        for (const r of pageItems) {
+            const urlImg = r.evidencia_img
+                ? conexion.storage.from("Imagenes_Evidencia").getPublicUrl(r.evidencia_img).data.publicUrl
+                : "";
+
+            const usuarioNombre = getUsuarioNombre(r.usuario_creador);
+            const salaNombre = getSalaNombre(r.sala_id);
+            const sedeNombre = getSedeNombreBySalaId(r.sala_id);
+            const fechaHoraCol = new Date(r.fecha_revision).toLocaleString("es-CO", {
+                timeZone: "America/Bogota",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true
+            });
+
+            const estadoHtml = (r.estado_sala === "Incompleta" || r.estado_sala === "Inoperativa")
+                ? `<span class="status-link" onclick="openPlanModalById(${r.id})">${escapeHtml(r.estado_sala || "")}</span>`
+                : `<span>${escapeHtml(r.estado_sala || "")}</span>`;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${escapeHtml(salaNombre)}</td>
+                <td>${escapeHtml(sedeNombre)}</td>
+                <td>${escapeHtml(usuarioNombre)}</td>
+                <td>${estadoHtml}</td>
+                <td>${escapeHtml(r.estado_tv || "")}</td>
+                <td>${escapeHtml(r.estado_hdmi || "")}</td>
+                <td>${escapeHtml(r.estado_camara || "")}</td>
+                <td>${escapeHtml(r.estado_control || "")}</td>
+                <td>${escapeHtml(r.microfonos_externos || "")}</td>
+                <td>${escapeHtml(r.serial_camara || "")}</td>
+                <td>${escapeHtml(r.detalles_extra || "")}</td>
+                <td>${escapeHtml(fechaHoraCol)}</td>
+                <td>${urlImg ? `<img class="img-evidencia" src="${urlImg}" onclick="window.open('${urlImg}', '_blank')" />` : ""}</td>
+            `;
+            tablaResultados.appendChild(tr);
+        }
+    }
+
+    function updatePaginationControls() {
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        paginationControls.innerHTML = "";
+
+        if (totalPages <= 1) return;
+
+        const prev = document.createElement("button");
+        prev.textContent = "Anterior";
+        prev.disabled = currentPage === 1;
+        prev.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+                updatePaginationControls();
+            }
+        };
+        paginationControls.appendChild(prev);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.className = i === currentPage ? "active" : "";
+            btn.onclick = () => {
+                currentPage = i;
+                renderPage(currentPage);
+                updatePaginationControls();
+            };
+            paginationControls.appendChild(btn);
+        }
+
+        const next = document.createElement("button");
+        next.textContent = "Siguiente";
+        next.disabled = currentPage === totalPages;
+        next.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+                updatePaginationControls();
+            }
+        };
+        paginationControls.appendChild(next);
+    }
+
+    async function exportFiltered() {
+        if (!filteredData.length) return;
+
+        const now = new Date().toLocaleString("es-CO", {
+            timeZone: "America/Bogota",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        }).replace(/[/,: ]/g, "-");
+
+        const dataForExcel = filteredData.map(r => ({
+            Sala: getSalaNombre(r.sala_id),
+            Sede: getSedeNombreBySalaId(r.sala_id),
+            Usuario: getUsuarioNombre(r.usuario_creador),
+            "Estado Sala": r.estado_sala,
+            "Estado TV": r.estado_tv,
+            HDMI: r.estado_hdmi,
+            Cámara: r.estado_camara,
+            Control: r.estado_control,
+            Micrófonos: r.microfonos_externos,
+            "Serial Cámara": r.serial_camara,
+            Detalles: r.detalles_extra,
+            "Plan de acción": r.plan_accion || "",
+            "Fecha y hora": new Date(r.fecha_revision).toLocaleString("es-CO", {
+                timeZone: "America/Bogota",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true
+            }),
+            Evidencia: r.evidencia_img
+                ? conexion.storage.from("Imagenes_Evidencia").getPublicUrl(r.evidencia_img).data.publicUrl
+                : ""
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dataForExcel);
+        XLSX.utils.book_append_sheet(wb, ws, "Registros Filtrados");
+        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([wbout], { type: "application/octet-stream" });
+
+        const fileHandle = await window.showSaveFilePicker({
+            suggestedName: `Registros_Filtrados_${now}.xlsx`,
+            types: [{
+                description: "Excel File",
+                accept: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+                }
+            }]
+        });
+
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+    }
+
+    async function openPlanModalById(id) {
+        const row = currentData.find(r => String(r.id) === String(id))
+            || filteredData.find(r => String(r.id) === String(id))
+            || statsRevisions.find(r => String(r.id) === String(id))
+            || null;
+
+        let data = row;
+
+        if (!data) {
+            const fetched = await conexion
+                .from("revision_salas")
+                .select("*")
+                .eq("id", id)
+                .single();
+
+            if (fetched.error || !fetched.data) {
+                alert("No se encontró el registro.");
+                return;
+            }
+
+            data = fetched.data;
+        }
+
+        selectedRevisionId = data.id;
+
+        const sala = getSalaById(data.sala_id);
+
+        planSalaInfo.textContent = sala?.nombre_sala || "";
+        planSedeInfo.textContent = getSedeById(sala?.sede_sala)?.nombre_sede || "";
+        planUsuarioInfo.textContent = getUsuarioNombre(data.usuario_creador);
+        planFechaInfo.textContent = new Date(data.fecha_revision).toLocaleString("es-CO", {
+            timeZone: "America/Bogota",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+        });
+        planEstadoInfo.textContent = data.estado_sala || "";
+        planDetallesInfo.value = data.detalles_extra || "";
+        planAccionInput.value = data.plan_accion || "";
+        planAccionInput.readOnly = true;
+        editPlanBtn.classList.remove("hidden");
+        savePlanBtn.classList.add("hidden");
+        openModal(planModal);
+    }
+
+    function setPlanEditMode(editing) {
+        planAccionInput.readOnly = !editing;
+        editPlanBtn.classList.toggle("hidden", editing);
+        savePlanBtn.classList.toggle("hidden", !editing);
+        if (editing) {
+            planAccionInput.focus();
+        }
+    }
+
+    async function savePlanAction() {
+        if (!selectedRevisionId) return;
+
+        const plan = planAccionInput.value.trim();
+
+        if (!plan) {
+            alert("Escribe un plan de acción.");
+            return;
+        }
+
+        savePlanBtn.disabled = true;
+        savePlanBtn.textContent = "Guardando...";
+
+        try {
+            const { error } = await conexion
+                .from("revision_salas")
+                .update({ plan_accion: plan })
+                .eq("id", selectedRevisionId);
+
+            if (error) throw error;
+
+            const updateLocal = row => {
+                if (row && String(row.id) === String(selectedRevisionId)) {
+                    row.plan_accion = plan;
+                }
+            };
+
+            currentData.forEach(updateLocal);
+            filteredData.forEach(updateLocal);
+            statsRevisions.forEach(updateLocal);
+
+            renderPage(currentPage);
+            renderStats();
+            setPlanEditMode(false);
+        } catch (error) {
+            console.error("Error al guardar plan:", error);
+            alert("No se pudo guardar el plan de acción.");
+        } finally {
+            savePlanBtn.disabled = false;
+            savePlanBtn.textContent = "Guardar cambios";
+        }
+    }
+
+    function renderStats() {
+        const sedeId = statsSedeFilter.value;
+        let data = [...statsRevisions];
+
+        if (sedeId !== "todas") {
+            data = data.filter(r => String(getSedeIdBySalaId(r.sala_id)) === String(sedeId));
+        }
+
+        data = computeLatestBySala(data);
+
+        const total = data.length;
+        const operativas = data.filter(r => r.estado_sala === "Operativa").length;
+        const incompletas = data.filter(r => r.estado_sala === "Incompleta").length;
+        const inoperativas = data.filter(r => r.estado_sala === "Inoperativa").length;
+
+        const incompletasSinPlan = data.filter(r =>
+            r.estado_sala === "Incompleta" && !(r.plan_accion || "").trim()
+        ).length;
+
+        const inoperativasSinPlan = data.filter(r =>
+            r.estado_sala === "Inoperativa" && !(r.plan_accion || "").trim()
+        ).length;
+
+        const pct = n => total ? ((n / total) * 100).toFixed(1) : "0.0";
+
+        statsCards.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-label">Salas totales</div>
+                <div class="stat-value">${total}</div>
+                <div class="stat-sub">Última revisión por sala</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Salas operativas</div>
+                <div class="stat-value">${operativas}</div>
+                <div class="stat-sub">${pct(operativas)}%</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Salas incompletas</div>
+                <div class="stat-value">${incompletas}</div>
+                <div class="stat-sub">${pct(incompletas)}%</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Salas incompletas sin plan de acción</div>
+                <div class="stat-value">${incompletasSinPlan}</div>
+                <div class="stat-sub">${pct(incompletasSinPlan)}%</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Salas inoperativas</div>
+                <div class="stat-value">${inoperativas}</div>
+                <div class="stat-sub">${pct(inoperativas)}%</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Salas inoperativas sin plan de acción</div>
+                <div class="stat-value">${inoperativasSinPlan}</div>
+                <div class="stat-sub">${pct(inoperativasSinPlan)}%</div>
+            </div>
+        `;
+
+        const ctx = statsChartCanvas.getContext("2d");
+
+        if (statsChartInstance) {
+            statsChartInstance.destroy();
+        }
+
+        statsChartInstance = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["Operativa", "Incompleta", "Inoperativa"],
+                datasets: [{
+                    data: [operativas, incompletas, inoperativas],
+                    backgroundColor: ["#10b981", "#f59e0b", "#ef4444"]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => {
+                                const value = context.raw || 0;
+                                const percent = total ? ((value / total) * 100).toFixed(1) : "0.0";
+                                return ` ${context.label}: ${value} (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadStatsData() {
+        renderStats();
+    }
+
+    function setupSearchFilter() {
+        searchInput.addEventListener("input", applyRecordFilters);
+        filterUsuario.addEventListener("change", applyRecordFilters);
+        filterSede.addEventListener("change", applyRecordFilters);
+        filterFecha.addEventListener("change", applyRecordFilters);
+        filterUltima.addEventListener("change", applyRecordFilters);
+        statsSedeFilter.addEventListener("change", renderStats);
+    }
+
+    function openSalaForm() {
+        openModal(salaModal);
+    }
+
+    function closeSalaForm() {
+        closeModal(salaModal);
+        nuevoNombreSala.value = "";
+        salaSedeId.value = "";
+        nuevoPisoSala.value = "";
+        nuevaImagenSala.value = "";
+    }
+
+    function openSedeForm() {
+        openModal(sedeModal);
+    }
+
+    function closeSedeForm() {
+        closeModal(sedeModal);
+        nuevoNombreSede.value = "";
+    }
+
+    function closePlanForm() {
+        closeModal(planModal);
+        selectedRevisionId = null;
+        planAccionInput.readOnly = true;
+        editPlanBtn.classList.remove("hidden");
+        savePlanBtn.classList.add("hidden");
+    }
+
+    async function guardarRevisiones() {
+        const rooms = [...document.querySelectorAll(".room")];
+        if (!rooms.length) return;
+
+        for (const card of rooms) {
+            const sedeId = card.querySelector(".sede-select").value;
+            const salaId = card.querySelector(".room-name").value;
+            const usuarioId = card.querySelector(".usuario-creador").value;
+
+            if (!sedeId || !salaId || !usuarioId) {
+                alert("Completa sede, sala y usuario en cada registro.");
+                return;
+            }
+        }
+
+        showLoading();
+        createBtn.disabled = true;
+        createBtn.textContent = "Guardando...";
+
+        try {
+            const data = [];
+
+            for (const card of rooms) {
+                const fileInput = card.querySelector(".evidencia_img");
+                const file = fileInput.files[0];
+                let uniqueImageName = null;
+
+                if (file) {
+                    const ext = file.name.split(".").pop();
+                    const timestamp = new Date()
+                        .toLocaleString("sv-SE", { timeZone: "America/Bogota" })
+                        .replace(/[^0-9]/g, "")
+                        .slice(0, 14);
+                    const random = Math.floor(Math.random() * 100000);
+                    uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
+
+                    const { error: uploadError } = await conexion.storage
+                        .from("Imagenes_Evidencia")
+                        .upload(uniqueImageName, file);
+
+                    if (uploadError) throw uploadError;
+                }
+
+                let estadoSala = card.querySelector(".estado").value || null;
+
+                if (estadoSala === "Operativa" && isCardInvalidForOperativa(card)) {
+                    estadoSala = "Incompleta";
+                    card.querySelector(".estado").value = "Incompleta";
+                }
+
+                data.push({
+                    sala_id: Number(card.querySelector(".room-name").value),
+                    usuario_creador: Number(card.querySelector(".usuario-creador").value) || null,
+                    serial_camara: card.querySelector(".serial-camara").value.trim() || null,
+                    estado_tv: card.querySelector(".el-televisor").value || null,
+                    estado_hdmi: card.querySelector(".el-hdmi").value || null,
+                    estado_camara: card.querySelector(".el-camara").value || null,
+                    estado_control: card.querySelector(".el-control").value || null,
+                    microfonos_externos: card.querySelector(".el-microfonos").checked ? "Si tiene" : "No tiene",
+                    estado_sala: estadoSala,
+                    detalles_extra: card.querySelector(".detalles").value.trim() || null,
+                    fecha_revision: new Date().toISOString(),
+                    evidencia_img: uniqueImageName
+                });
+            }
+
+            const { error } = await conexion.from("revision_salas").insert(data);
+            if (error) throw error;
+
+            roomsContainer.innerHTML = "";
+            updateUI();
+            await loadAllRevisions();
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            alert("No se pudo guardar en la base de datos. Intenta de nuevo.");
+        } finally {
+            hideLoading();
+            createBtn.disabled = false;
+            createBtn.textContent = "Guardar";
+        }
+    }
+
+    async function buscarRegistros() {
+        await loadAllRevisions();
+    }
+
+    function isCardInvalidForOperativa(card) {
+        const invalidStates = ["No funciona", "No tiene"];
+        const values = [
+            card.querySelector(".el-televisor")?.value,
+            card.querySelector(".el-hdmi")?.value,
+            card.querySelector(".el-camara")?.value,
+            card.querySelector(".el-control")?.value
+        ];
+        return values.some(v => invalidStates.includes(v));
+    }
+
+    function openSalaModalHandler() {
+        openModal(salaModal);
+    }
+
+    function openSedeModalHandler() {
+        openModal(sedeModal);
+    }
+
+    addSalaBtn.onclick = openSalaModalHandler;
+    addSedeBtn.onclick = openSedeModalHandler;
+    closeSalaModalBtn.onclick = closeSalaForm;
+    cancelSalaBtn.onclick = closeSalaForm;
+    saveSalaBtn.onclick = guardarSala;
+    closeSedeModalBtn.onclick = closeSedeForm;
+    cancelSedeBtn.onclick = closeSedeForm;
+    saveSedeBtn.onclick = guardarSede;
+    closePlanBtn.onclick = closePlanForm;
+    editPlanBtn.onclick = () => setPlanEditMode(true);
+    savePlanBtn.onclick = savePlanAction;
+
+    document.getElementById("addFirstRoomBtn").onclick = addRoom;
+    floatingBtn.onclick = addRoom;
+    document.getElementById("createBtn").onclick = guardarRevisiones;
+
+    document.getElementById("viewRecordsBtn").onclick = () => {
+        setVisibleView("records");
+        loadAllRevisions();
+    };
+
+    document.getElementById("backBtn").onclick = () => {
+        setVisibleView("form");
+    };
+
+    document.getElementById("buscarBtn").onclick = buscarRegistros;
+    document.getElementById("exportFilteredBtn").onclick = exportFiltered;
+
+    viewStatsBtn.onclick = () => {
+        setVisibleView("stats");
+        renderStats();
+    };
+
+    backStatsBtn.onclick = () => {
+        setVisibleView("form");
+    };
+
+    refreshStatsBtn.onclick = renderStats;
+
+    window.openPlanModalById = openPlanModalById;
+    window.removeRoom = removeRoom;
+
+    (async function init() {
+        await loadUsuarios();
+        await loadSedes();
+        await loadSalas();
+        fillUsuariosInCards();
+        fillSedeSelects();
+        fillSalaSelects();
+        updateUI();
+        setupSearchFilter();
+        await loadAllRevisions();
+    })();
+</script>
+
+</body>
+</html>
