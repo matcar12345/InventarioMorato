@@ -164,7 +164,8 @@
 
         input[type="text"],
         select,
-        textarea {
+        textarea,
+        input[type="file"] {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
@@ -232,6 +233,7 @@
             border-radius: 20px;
             color: var(--text-muted);
             margin: 60px 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(248,250,252,0.85));
         }
 
         .empty h2 {
@@ -382,7 +384,8 @@
         #loadingModal,
         #salaModal,
         #sedeModal,
-        #planModal {
+        #planModal,
+        #salaInfoModal {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.5);
@@ -504,6 +507,13 @@
             font-weight: 700;
         }
 
+        .sala-link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--pri-dark);
+            font-weight: 700;
+        }
+
         .plan-info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -533,6 +543,139 @@
 
         .select-disabled {
             opacity: 0.7;
+        }
+
+        .sala-info-content {
+            width: min(100%, 780px);
+            height: min(90vh, 900px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+        }
+
+        .sala-hero {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 24px 24px 20px;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 55%, #4f46e5 100%);
+            color: white;
+        }
+
+        .sala-kicker {
+            margin-bottom: 6px;
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            font-weight: 700;
+        }
+
+        .sala-hero h2 {
+            font-size: 28px;
+            line-height: 1.15;
+            margin: 0;
+        }
+
+        .sala-subtitle {
+            margin-top: 8px;
+            color: rgba(255,255,255,0.78);
+            font-size: 14px;
+        }
+
+        .sala-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 22px 24px 24px;
+            overflow-y: auto;
+        }
+
+        .sala-preview-frame {
+            position: relative;
+            overflow: hidden;
+            min-height: 340px;
+            border-radius: 22px;
+            border: 1px solid var(--border);
+            background: #0f172a;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), var(--shadow-md);
+        }
+
+        .sala-preview-frame img {
+            width: 100%;
+            height: 100%;
+            max-height: 460px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .sala-preview-empty {
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 32px;
+            text-align: center;
+            color: #cbd5e1;
+            background:
+                radial-gradient(circle at top, rgba(99,102,241,0.20), transparent 45%),
+                linear-gradient(180deg, #0f172a 0%, #111827 100%);
+        }
+
+        .sala-preview-empty strong {
+            color: #ffffff;
+            font-size: 18px;
+        }
+
+        .sala-upload-zone {
+            margin-top: 24px;
+            display: flex;
+            gap: 22px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sala-upload-zone strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .sala-upload-zone p {
+            color: var(--text-muted);
+            font-size: 14px;
+            max-width: 520px;
+        }
+
+        .sala-upload-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .sala-upload-actions input[type="file"] {
+            max-width: 300px;
+        }
+
+        .sala-info-content .modal-actions {
+            margin-top: 18px;
+            justify-content: flex-end;
+            padding-top: 8px;
         }
     </style>
 </head>
@@ -632,6 +775,38 @@
         <div class="modal-actions">
             <button class="btn btn-outline" id="editPlanBtn">Editar</button>
             <button class="btn btn-primary hidden" id="savePlanBtn">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<div id="salaInfoModal">
+    <div class="modal-content sala-info-content">
+        <div class="sala-hero">
+            <div>
+                <p class="sala-kicker">Ubicación de la sala</p>
+                <h2 id="salaInfoTitle">Sala</h2>
+                <p class="sala-subtitle" id="salaInfoMeta"></p>
+            </div>
+            <button class="btn btn-outline" id="closeSalaInfoBtn">Cerrar</button>
+        </div>
+        <div class="sala-body">
+            <div class="sala-preview-frame">
+                <div class="sala-preview-empty hidden" id="salaInfoEmpty">
+                    <strong>Esta sala aún no tiene imagen</strong>
+                    <span>Sube una ubicación para que todos los registros la vean.</span>
+                </div>
+                <img id="salaInfoImage" alt="Ubicación de la sala" class="hidden" />
+            </div>
+            <div class="sala-upload-zone">
+                <div>
+                    <strong>Imagen de ubicación</strong>
+                    <p>Se guarda una sola imagen por sala. Si subes otra, reemplaza la anterior.</p>
+                </div>
+                <div class="sala-upload-actions">
+                    <input type="file" id="salaInfoImageInput" accept="image/*" />
+                    <button class="btn btn-primary" id="saveSalaInfoBtn">Guardar imagen</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -853,6 +1028,7 @@
     const salaModal = document.getElementById("salaModal");
     const sedeModal = document.getElementById("sedeModal");
     const planModal = document.getElementById("planModal");
+    const salaInfoModal = document.getElementById("salaInfoModal");
     const addSalaBtn = document.getElementById("addSalaBtn");
     const addSedeBtn = document.getElementById("addSedeBtn");
     const closeSalaModalBtn = document.getElementById("closeSalaModalBtn");
@@ -876,6 +1052,13 @@
     const planEstadoInfo = document.getElementById("planEstadoInfo");
     const planDetallesInfo = document.getElementById("planDetallesInfo");
     const planAccionInput = document.getElementById("planAccionInput");
+    const closeSalaInfoBtn = document.getElementById("closeSalaInfoBtn");
+    const saveSalaInfoBtn = document.getElementById("saveSalaInfoBtn");
+    const salaInfoTitle = document.getElementById("salaInfoTitle");
+    const salaInfoMeta = document.getElementById("salaInfoMeta");
+    const salaInfoImage = document.getElementById("salaInfoImage");
+    const salaInfoEmpty = document.getElementById("salaInfoEmpty");
+    const salaInfoImageInput = document.getElementById("salaInfoImageInput");
     const viewStatsBtn = document.getElementById("viewStatsBtn");
     const statsView = document.getElementById("statsView");
     const backStatsBtn = document.getElementById("backStatsBtn");
@@ -893,6 +1076,7 @@
     let currentPage = 1;
     let currentView = "form";
     let selectedRevisionId = null;
+    let selectedSalaInfoId = null;
     let statsChartInstance = null;
     const rowsPerPage = 10;
 
@@ -906,7 +1090,7 @@
     }
 
     function updateBodyLock() {
-        const open = [loadingModal, salaModal, sedeModal, planModal].some(modal => modal.style.display === "flex");
+        const open = [loadingModal, salaModal, sedeModal, planModal, salaInfoModal].some(modal => modal.style.display === "flex");
         document.body.classList.toggle("modal-open", open);
     }
 
@@ -1053,6 +1237,44 @@
 
     function getSedeIdBySalaId(salaId) {
         return getSalaById(salaId)?.sede_sala || null;
+    }
+
+    function decodeHexText(value) {
+        if (value == null) return "";
+        const raw = String(value).trim();
+        if (!raw.startsWith("\\x")) return raw;
+
+        const hex = raw.slice(2);
+        if (!hex || hex.length % 2 !== 0) return "";
+
+        const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+        return new TextDecoder("utf-8").decode(bytes);
+    }
+
+    function normalizeSalaUbicacion(value) {
+        return decodeHexText(value).trim();
+    }
+
+    function salaStoragePath(salaId) {
+        return `salas/${salaId}/ubicacion_sala`;
+    }
+
+    async function getSalaImagenUrl(sala) {
+        const rawPath = normalizeSalaUbicacion(sala?.ubicacion_sala);
+
+        if (!rawPath) return "";
+        if (rawPath.startsWith("http")) return rawPath;
+
+        const { data, error } = await conexion.storage
+            .from("Imagenes_Evidencia")
+            .createSignedUrl(rawPath, 60 * 10);
+
+        if (error || !data?.signedUrl) {
+            console.error("Error creando URL firmada:", error, rawPath);
+            return "";
+        }
+
+        return data.signedUrl;
     }
 
     function updateUI() {
@@ -1224,10 +1446,10 @@
         const nombre_sala = nuevoNombreSala.value.trim();
         const sede_sala = salaSedeId.value;
         const piso_sala = nuevoPisoSala.value.trim();
-        const file = nuevaImagenSala.files[0];
+        const file = nuevaImagenSala.files[0] || null;
 
-        if (!nombre_sala || !sede_sala || !piso_sala || !file) {
-            alert("Completa nombre, sede, piso e imagen.");
+        if (!nombre_sala || !sede_sala || !piso_sala) {
+            alert("Completa nombre, sede y piso.");
             return;
         }
 
@@ -1235,28 +1457,41 @@
         saveSalaBtn.textContent = "Guardando...";
 
         try {
-            const ext = file.name.split(".").pop();
-            const timestamp = new Date()
-                .toLocaleString("sv-SE", { timeZone: "America/Bogota" })
-                .replace(/[^0-9]/g, "")
-                .slice(0, 14);
-            const random = Math.floor(Math.random() * 100000);
-            const uniqueImageName = `sala_${timestamp}_${random}.${ext}`;
+            const { data: inserted, error: insertError } = await conexion
+                .from("salas")
+                .insert([{
+                    nombre_sala,
+                    sede_sala: Number(sede_sala),
+                    piso_sala,
+                    ubicacion_sala: null
+                }])
+                .select("id")
+                .single();
 
-            const { error: uploadError } = await conexion.storage
-                .from("Imagenes_Evidencia")
-                .upload(uniqueImageName, file);
+            if (insertError) throw insertError;
 
-            if (uploadError) throw uploadError;
+            const salaId = inserted?.id;
 
-            const { error } = await conexion.from("salas").insert([{
-                nombre_sala,
-                sede_sala: Number(sede_sala),
-                piso_sala,
-                ubicacion_sala: uniqueImageName
-            }]);
+            if (file && salaId) {
+                const path = salaStoragePath(salaId);
 
-            if (error) throw error;
+                const { error: uploadError } = await conexion.storage
+                    .from("Imagenes_Evidencia")
+                    .upload(path, file, {
+                        upsert: true,
+                        contentType: file.type,
+                        cacheControl: "3600"
+                    });
+
+                if (uploadError) throw uploadError;
+
+                const { error: updateError } = await conexion
+                    .from("salas")
+                    .update({ ubicacion_sala: path })
+                    .eq("id", salaId);
+
+                if (updateError) throw updateError;
+            }
 
             nuevoNombreSala.value = "";
             salaSedeId.value = "";
@@ -1401,7 +1636,7 @@
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${escapeHtml(salaNombre)}</td>
+                <td><span class="sala-link" onclick="openSalaInfoModalBySalaId(${r.sala_id})">${escapeHtml(salaNombre)}</span></td>
                 <td>${escapeHtml(sedeNombre)}</td>
                 <td>${escapeHtml(usuarioNombre)}</td>
                 <td>${estadoHtml}</td>
@@ -1722,8 +1957,117 @@
         });
     }
 
-    async function loadStatsData() {
-        renderStats();
+    async function openSalaInfoModalBySalaId(salaId) {
+        let sala = getSalaById(salaId);
+
+        if (!sala) {
+            await loadSalas();
+            sala = getSalaById(salaId);
+        }
+
+        if (!sala) {
+            alert("No se encontró la sala.");
+            return;
+        }
+
+        selectedSalaInfoId = sala.id;
+        salaInfoTitle.textContent = sala.nombre_sala || "Sala";
+        salaInfoMeta.textContent = `${getSedeById(sala.sede_sala)?.nombre_sede || "Sin sede"} · ${sala.piso_sala || "Sin piso"}`;
+        salaInfoImageInput.value = "";
+        salaInfoImage.classList.add("hidden");
+        salaInfoEmpty.classList.remove("hidden");
+        salaInfoEmpty.innerHTML = `
+            <strong>Cargando imagen...</strong>
+            <span>Si la sala tiene ubicación guardada, aparecerá aquí.</span>
+        `;
+        openModal(salaInfoModal);
+
+        const url = await getSalaImagenUrl(sala);
+
+        if (selectedSalaInfoId !== sala.id) return;
+
+        if (url) {
+            salaInfoImage.src = url;
+            salaInfoImage.classList.remove("hidden");
+            salaInfoEmpty.classList.add("hidden");
+        } else {
+            salaInfoImage.removeAttribute("src");
+            salaInfoImage.classList.add("hidden");
+            salaInfoEmpty.innerHTML = `
+                <strong>Esta sala aún no tiene imagen</strong>
+                <span>Sube una ubicación para que todos los registros la vean.</span>
+            `;
+            salaInfoEmpty.classList.remove("hidden");
+        }
+    }
+
+    async function saveSalaInfoImage() {
+        if (!selectedSalaInfoId) return;
+
+        const file = salaInfoImageInput.files[0];
+        if (!file) {
+            alert("Selecciona una imagen.");
+            return;
+        }
+
+        saveSalaInfoBtn.disabled = true;
+        saveSalaInfoBtn.textContent = "Guardando...";
+
+        try {
+            const sala = getSalaById(selectedSalaInfoId);
+            const oldPath = normalizeSalaUbicacion(sala?.ubicacion_sala || "");
+            const path = salaStoragePath(selectedSalaInfoId);
+
+            const { error: uploadError } = await conexion.storage
+                .from("Imagenes_Evidencia")
+                .upload(path, file, {
+                    upsert: true,
+                    contentType: file.type,
+                    cacheControl: "3600"
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { error: updateError } = await conexion
+                .from("salas")
+                .update({ ubicacion_sala: path })
+                .eq("id", selectedSalaInfoId);
+
+            if (updateError) throw updateError;
+
+            if (oldPath && oldPath !== path) {
+                await conexion.storage.from("Imagenes_Evidencia").remove([oldPath]);
+            }
+
+            await loadSalas();
+            fillSalaSelects();
+
+            const updatedSala = getSalaById(selectedSalaInfoId);
+            const url = await getSalaImagenUrl(updatedSala);
+
+            if (url) {
+                salaInfoImage.src = url;
+                salaInfoImage.classList.remove("hidden");
+                salaInfoEmpty.classList.add("hidden");
+            }
+
+            salaInfoImageInput.value = "";
+        } catch (error) {
+            console.error("Error al guardar imagen de sala:", error);
+            alert("No se pudo guardar la imagen de la sala.");
+        } finally {
+            saveSalaInfoBtn.disabled = false;
+            saveSalaInfoBtn.textContent = "Guardar imagen";
+        }
+    }
+
+    function closeSalaInfoForm() {
+        closeModal(salaInfoModal);
+        selectedSalaInfoId = null;
+        salaInfoImageInput.value = "";
+        salaInfoImage.removeAttribute("src");
+        salaInfoImage.classList.add("hidden");
+        salaInfoEmpty.classList.remove("hidden");
     }
 
     function setupSearchFilter() {
@@ -1850,27 +2194,8 @@
         await loadAllRevisions();
     }
 
-    function isCardInvalidForOperativa(card) {
-        const invalidStates = ["No funciona", "No tiene"];
-        const values = [
-            card.querySelector(".el-televisor")?.value,
-            card.querySelector(".el-hdmi")?.value,
-            card.querySelector(".el-camara")?.value,
-            card.querySelector(".el-control")?.value
-        ];
-        return values.some(v => invalidStates.includes(v));
-    }
-
-    function openSalaModalHandler() {
-        openModal(salaModal);
-    }
-
-    function openSedeModalHandler() {
-        openModal(sedeModal);
-    }
-
-    addSalaBtn.onclick = openSalaModalHandler;
-    addSedeBtn.onclick = openSedeModalHandler;
+    addSalaBtn.onclick = openSalaForm;
+    addSedeBtn.onclick = openSedeForm;
     closeSalaModalBtn.onclick = closeSalaForm;
     cancelSalaBtn.onclick = closeSalaForm;
     saveSalaBtn.onclick = guardarSala;
@@ -1880,6 +2205,9 @@
     closePlanBtn.onclick = closePlanForm;
     editPlanBtn.onclick = () => setPlanEditMode(true);
     savePlanBtn.onclick = savePlanAction;
+
+    closeSalaInfoBtn.onclick = closeSalaInfoForm;
+    saveSalaInfoBtn.onclick = saveSalaInfoImage;
 
     document.getElementById("addFirstRoomBtn").onclick = addRoom;
     floatingBtn.onclick = addRoom;
@@ -1910,6 +2238,7 @@
 
     window.openPlanModalById = openPlanModalById;
     window.removeRoom = removeRoom;
+    window.openSalaInfoModalBySalaId = openSalaInfoModalBySalaId;
 
     (async function init() {
         await loadUsuarios();
