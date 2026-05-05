@@ -1972,7 +1972,7 @@
 
         selectedSalaInfoId = sala.id;
         salaInfoTitle.textContent = sala.nombre_sala || "Sala";
-        salaInfoMeta.textContent = `${getSedeById(sala.sede_sala)?.nombre_sede || "Sin sede"} · ${sala.piso_sala || "Sin piso"}`;
+        salaInfoMeta.textContent = `${getSedeById(sala.sede_sala)?.nombre_sede || "Sin sede"}`;
         salaInfoImageInput.value = "";
         salaInfoImage.classList.add("hidden");
         salaInfoEmpty.classList.remove("hidden");
